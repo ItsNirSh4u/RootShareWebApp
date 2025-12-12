@@ -91,35 +91,9 @@ pnpm format
 
 ---
 
-## Project Status
-
-**Overall Completion: ~40%**
-
-✅ **Complete:**
-- Monorepo infrastructure
-- Authentication system (JWT + refresh tokens)
-- Database setup (MongoDB + schemas)
-- Shared TypeScript types
-- Development environment
-
-🚧 **In Progress:**
-- Backend CRUD modules (Plants, Posts, Comments, Likes)
-- Frontend pages and components
-- Image upload functionality
-- Unit and E2E tests
-
----
-
 ## Contributing
 
 This is a final project for academic purposes. For development workflow and contribution guidelines, see [docs/README.md](docs/README.md).
 
----
-
-## License
-
-ISC
-
----
 
 **For detailed documentation, troubleshooting, and development guides, visit [docs/](docs/)**
