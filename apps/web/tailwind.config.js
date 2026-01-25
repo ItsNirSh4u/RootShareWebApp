@@ -12,44 +12,77 @@ export default {
     },
     extend: {
       colors: {
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
+        // Primary brand colors
         primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
+          DEFAULT: 'hsl(var(--color-primary))',
+          hover: 'hsl(var(--color-primary-hover))',
+          light: 'hsl(var(--color-primary-light))',
+          foreground: 'hsl(var(--color-primary-foreground))',
         },
-        secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
-        },
+        // Background colors
+        'bg-main': 'hsl(var(--color-bg-main))',
+        'bg-subtle': 'hsl(var(--color-bg-subtle))',
+        'bg-muted': 'hsl(var(--color-bg-muted))',
+        'bg-card': 'hsl(var(--color-bg-card))',
+        'bg-popover': 'hsl(var(--color-bg-popover))',
+        'bg-hero': 'hsl(var(--color-bg-hero))',
+        // Text colors
+        'text-base': 'hsl(var(--color-text-base))',
+        'text-muted': 'hsl(var(--color-text-muted))',
+        'text-subtle': 'hsl(var(--color-text-subtle))',
+        'text-inverted': 'hsl(var(--color-text-inverted))',
+        // Border colors
+        'border-default': 'hsl(var(--color-border-default))',
+        'border-muted': 'hsl(var(--color-border-muted))',
+        'border-input': 'hsl(var(--color-border-input))',
+        // Semantic colors
         destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
+          DEFAULT: 'hsl(var(--color-destructive))',
+          foreground: 'hsl(var(--color-destructive-foreground))',
         },
-        muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
+        success: {
+          DEFAULT: 'hsl(var(--color-success))',
+          foreground: 'hsl(var(--color-success-foreground))',
         },
-        accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
+        warning: {
+          DEFAULT: 'hsl(var(--color-warning))',
+          foreground: 'hsl(var(--color-warning-foreground))',
         },
-        popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
-        },
-        card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
-        },
+        // Component-specific
+        ring: 'hsl(var(--color-ring))',
       },
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        lg: 'var(--radius-lg)',
+        md: 'var(--radius)',
+        sm: 'var(--radius-sm)',
+      },
+      fontFamily: {
+        sans: [
+          'Inter',
+          'ui-sans-serif',
+          'system-ui',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI',
+          'Roboto',
+          'Helvetica Neue',
+          'Arial',
+          'sans-serif',
+        ],
+      },
+      boxShadow: {
+        soft: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+        'soft-md': '0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05)',
+        'soft-lg': '0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05)',
+      },
+      keyframes: {
+        'spin-slow': {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' },
+        },
+      },
+      animation: {
+        'spin-slow': 'spin-slow 1.5s linear infinite',
       },
     },
   },
