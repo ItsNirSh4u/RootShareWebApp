@@ -23,7 +23,7 @@ export function AuthCallbackPage(): JSX.Element {
 
       try {
         // Fetch user profile with the new access token
-        const response = await api.get<IUser>('/auth/profile', {
+        const response = await api.get<IUser>('/auth/me', {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
