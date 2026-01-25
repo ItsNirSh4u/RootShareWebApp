@@ -1,11 +1,17 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { AuthLayout } from '../components/layouts/AuthLayout';
-import { Button, Input, Divider, ErrorAlert } from '../components/ui';
-import { GoogleIcon } from '../components/icons/GoogleIcon';
-import { useAuthStore } from '../stores/auth.store';
-import { loginUser, initiateGoogleAuth, getAuthErrorMessage } from '../lib/auth';
+import { AuthLayout } from '../../../components/layouts/AuthLayout';
+import { Button, Input, Divider, ErrorAlert } from '../../../components/ui';
+import { GoogleIcon } from '../../../components/icons/GoogleIcon';
+import { useAuthStore } from '../../../stores/auth.store';
+import {
+  loginUser,
+  initiateGoogleAuth,
+  getAuthErrorMessage,
+  validateEmail,
+  validatePassword,
+} from '../auth';
 
 export function LoginPage(): JSX.Element {
   const navigate = useNavigate();
@@ -23,34 +29,25 @@ export function LoginPage(): JSX.Element {
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/feed';
 
   const validateForm = (): boolean => {
+    const emailError = validateEmail(email, 'LOGIN');
+    const passwordError = validatePassword(password, 'LOGIN');
+
     const errors: { email?: string; password?: string } = {};
-
-    if (!email.trim()) {
-      errors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      errors.email = 'Please enter a valid email address';
-    }
-
-    if (!password) {
-      errors.password = 'Password is required';
-    } else if (password.length < 6) {
-      errors.password = 'Password must be at least 6 characters';
-    }
+    if (emailError) errors.email = emailError;
+    if (passwordError) errors.password = passwordError;
 
     setFieldErrors(errors);
+
     return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setError(null);
-
     if (!validateForm()) {
       return;
     }
-
     setIsLoading(true);
-
     try {
       const response = await loginUser({ email: email.trim(), password });
 
@@ -90,7 +87,6 @@ export function LoginPage(): JSX.Element {
     >
       <ErrorAlert message={error} className="mb-6" />
 
-      {/* Google Sign In */}
       <Button
         type="button"
         variant="outline"
@@ -106,7 +102,6 @@ export function LoginPage(): JSX.Element {
 
       <Divider className="mb-6">or continue with email</Divider>
 
-      {/* Login Form */}
       <form onSubmit={handleSubmit} className="space-y-5">
         <Input
           label="Email address"

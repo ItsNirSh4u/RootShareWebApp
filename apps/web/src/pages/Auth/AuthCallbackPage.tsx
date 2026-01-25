@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuthStore } from '../stores/auth.store';
-import { Spinner, ErrorAlert } from '../components/ui';
-import api from '../lib/api';
+import { useAuthStore } from '@/stores/auth.store';
+import { Spinner, ErrorAlert } from '@/components/ui';
+import api from '@/lib/api';
 import { IUser } from '@rootshare/shared-types';
 
 export function AuthCallbackPage(): JSX.Element {

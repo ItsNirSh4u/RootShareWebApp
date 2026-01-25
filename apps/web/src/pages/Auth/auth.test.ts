@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { loginUser, registerUser, initiateGoogleAuth, getAuthErrorMessage } from './auth';
-import api from './api';
+import {
+  loginUser,
+  registerUser,
+  initiateGoogleAuth,
+  getAuthErrorMessage,
+} from '@/pages/Auth/auth';
+import api from '@/lib/api';
 
 // Mock the api module
 vi.mock('./api', () => ({

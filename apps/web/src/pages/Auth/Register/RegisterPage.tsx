@@ -1,11 +1,19 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AuthLayout } from '../components/layouts/AuthLayout';
-import { Button, Input, Divider, ErrorAlert } from '../components/ui';
-import { GoogleIcon } from '../components/icons/GoogleIcon';
-import { useAuthStore } from '../stores/auth.store';
-import { registerUser, initiateGoogleAuth, getAuthErrorMessage } from '../lib/auth';
+import { AuthLayout } from '../../../components/layouts/AuthLayout';
+import { Button, Input, Divider, ErrorAlert } from '../../../components/ui';
+import { GoogleIcon } from '../../../components/icons/GoogleIcon';
+import { useAuthStore } from '../../../stores/auth.store';
+import {
+  registerUser,
+  initiateGoogleAuth,
+  getAuthErrorMessage,
+  validateConfirmPassword,
+  validateEmail,
+  validatePassword,
+  validateUsername,
+} from '../auth';
 
 interface FieldErrors {
   username?: string;
@@ -29,41 +37,10 @@ export function RegisterPage(): JSX.Element {
 
   const validateForm = (): boolean => {
     const errors: FieldErrors = {};
-
-    // Username validation
-    if (!username.trim()) {
-      errors.username = 'Username is required';
-    } else if (username.length < 3) {
-      errors.username = 'Username must be at least 3 characters';
-    } else if (username.length > 30) {
-      errors.username = 'Username must be less than 30 characters';
-    } else if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      errors.username = 'Username can only contain letters, numbers, and underscores';
-    }
-
-    // Email validation
-    if (!email.trim()) {
-      errors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      errors.email = 'Please enter a valid email address';
-    }
-
-    // Password validation
-    if (!password) {
-      errors.password = 'Password is required';
-    } else if (password.length < 8) {
-      errors.password = 'Password must be at least 8 characters';
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
-      errors.password = 'Password must contain uppercase, lowercase, and a number';
-    }
-
-    // Confirm password validation
-    if (!confirmPassword) {
-      errors.confirmPassword = 'Please confirm your password';
-    } else if (password !== confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match';
-    }
-
+    errors.username = validateUsername(username, 'REGISTER');
+    errors.email = validateEmail(email, 'REGISTER');
+    errors.password = validatePassword(password, 'REGISTER');
+    errors.confirmPassword = validateConfirmPassword(password, confirmPassword);
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -127,7 +104,6 @@ export function RegisterPage(): JSX.Element {
     >
       <ErrorAlert message={error} className="mb-6" />
 
-      {/* Google Sign Up */}
       <Button
         type="button"
         variant="outline"
@@ -143,7 +119,6 @@ export function RegisterPage(): JSX.Element {
 
       <Divider className="mb-6">or register with email</Divider>
 
-      {/* Registration Form */}
       <form onSubmit={handleSubmit} className="space-y-5">
         <Input
           label="Username"

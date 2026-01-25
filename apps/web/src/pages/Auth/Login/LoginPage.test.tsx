@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render, createMockAuthResponse } from '../test/test-utils';
-import { LoginPage } from './LoginPage';
+import { LoginPage } from './Auth/LoginPage';
 import * as authLib from '../lib/auth';
 import { useAuthStore } from '../stores/auth.store';
 
