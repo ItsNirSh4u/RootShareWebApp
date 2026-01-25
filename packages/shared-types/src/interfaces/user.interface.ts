@@ -1,4 +1,4 @@
-import { UserRole } from '../enums';
+import { UserRole, AuthProvider } from '../enums';
 
 export interface IUser {
   id: string;
@@ -6,6 +6,8 @@ export interface IUser {
   username: string;
   profileImageUrl?: string;
   role: UserRole;
+  authProvider: AuthProvider;
+  googleId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
