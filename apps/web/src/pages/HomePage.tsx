@@ -5,10 +5,10 @@ export function HomePage(): JSX.Element {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-green-50 to-green-100">
       <div className="text-center space-y-6 p-8">
         <div className="flex items-center justify-center gap-4">
-          <img 
-            src="/logo.svg" 
-            alt="RootShare Logo" 
-            className="w-16 h-16 md:w-20 md:h-20 object-contain" 
+          <img
+            src="/logo.svg"
+            alt="RootShare Logo"
+            className="w-32 h-32 md:w-40 md:h-40 object-contain drop-shadow-sm"
           />
           <h1 className="text-5xl font-bold text-green-800">RootShare</h1>
         </div>
