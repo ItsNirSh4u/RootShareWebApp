@@ -1,4 +1,4 @@
-import api from '../../lib/api';
+import api from '@/lib/api';
 import { IAuthResponse, IUserLogin, IUserRegistration } from '@rootshare/shared-types';
 
 export interface AuthError {
