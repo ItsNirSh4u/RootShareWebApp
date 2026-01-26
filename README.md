@@ -91,9 +91,4 @@ pnpm format
 
 ---
 
-## Contributing
-
-This is a final project for academic purposes. For development workflow and contribution guidelines, see [docs/README.md](docs/README.md).
-
-
 **For detailed documentation, troubleshooting, and development guides, visit [docs/](docs/)**

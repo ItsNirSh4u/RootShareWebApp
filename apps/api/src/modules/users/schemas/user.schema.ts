@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { UserRole } from '@rootshare/shared-types';
+import { UserRole, AuthProvider } from '@rootshare/shared-types';
 
 export type UserDocument = User & Document;
 
@@ -12,14 +12,23 @@ export class User {
   @Prop({ required: true, unique: true })
   username: string;
 
-  @Prop({ required: true, select: false })
-  password: string;
+  @Prop({ select: false })
+  password?: string;
 
   @Prop({ default: null })
   profileImageUrl?: string;
 
   @Prop({ type: String, enum: UserRole, default: UserRole.USER })
   role: UserRole;
+
+  @Prop({ type: String, enum: AuthProvider, default: AuthProvider.LOCAL })
+  authProvider: AuthProvider;
+
+  @Prop({ sparse: true, unique: true })
+  googleId?: string;
+
+  @Prop({ select: false })
+  refreshToken?: string;
 
   @Prop()
   createdAt: Date;

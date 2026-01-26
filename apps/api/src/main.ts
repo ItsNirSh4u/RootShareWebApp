@@ -47,8 +47,8 @@ async function bootstrap(): Promise<void> {
   const port = process.env.PORT || 3000;
   await app.listen(port);
 
-  console.log(`🌱 RootShare API is running on: http://localhost:${port}/api`);
-  console.log(`📚 Swagger documentation available at: http://localhost:${port}/api/docs`);
+  console.log(`RootShare API running on: http://localhost:${port}/api`);
+  console.log(`Swagger docs: http://localhost:${port}/api/docs`);
 }
 
 bootstrap();

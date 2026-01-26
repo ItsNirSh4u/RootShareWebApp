@@ -1,11 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { HomePage } from './pages/HomePage';
-import { LoginPage } from './pages/LoginPage';
-import { RegisterPage } from './pages/RegisterPage';
-import { FeedPage } from './pages/FeedPage';
-import { InventoryPage } from './pages/InventoryPage';
-import { ProfilePage } from './pages/ProfilePage';
-import { useAuthStore } from './stores/auth.store';
+import { HomePage } from '@/pages/HomePage';
+import { LoginPage } from '@/pages/Auth/Login/LoginPage';
+import { RegisterPage } from '@/pages/Auth/Register/RegisterPage';
+import { AuthCallbackPage } from '@/pages/Auth/AuthCallbackPage';
+import { FeedPage } from '@/pages/FeedPage';
+import { InventoryPage } from '@/pages/InventoryPage';
+import { ProfilePage } from '@/pages/ProfilePage';
+import { useAuthStore } from '@/stores/auth.store';
 
 function App(): JSX.Element {
   const { isAuthenticated } = useAuthStore();
@@ -16,12 +17,9 @@ function App(): JSX.Element {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
-        {/* Protected routes */}
-        <Route
-          path="/feed"
-          element={isAuthenticated ? <FeedPage /> : <Navigate to="/login" />}
-        />
+        <Route path="/feed" element={isAuthenticated ? <FeedPage /> : <Navigate to="/login" />} />
         <Route
           path="/inventory"
           element={isAuthenticated ? <InventoryPage /> : <Navigate to="/login" />}
