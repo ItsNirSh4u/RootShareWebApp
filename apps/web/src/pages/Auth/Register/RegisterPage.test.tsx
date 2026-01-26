@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { render, createMockAuthResponse } from '../../test/test-utils';
-import { RegisterPage } from './RegisterPage';
-import * as authLib from './auth';
-import { useAuthStore } from '../../stores/auth.store';
+import { render, createMockAuthResponse } from '@/test/test-utils';
+import { RegisterPage } from '@/pages/Auth/Register/RegisterPage';
+import * as authLib from '@/pages/Auth/auth';
+import { useAuthStore } from '@/stores/auth.store';
 
 // Mock the auth library
 vi.mock('../lib/auth', () => ({
@@ -84,7 +84,9 @@ describe('RegisterPage', () => {
       await user.click(screen.getByRole('button', { name: /create account/i }));
 
       await waitFor(() => {
-        expect(screen.getByText('Username can only contain letters, numbers, and underscores')).toBeInTheDocument();
+        expect(
+          screen.getByText('Username can only contain letters, numbers, and underscores'),
+        ).toBeInTheDocument();
       });
     });
   });
@@ -153,7 +155,9 @@ describe('RegisterPage', () => {
       await user.click(screen.getByRole('button', { name: /create account/i }));
 
       await waitFor(() => {
-        expect(screen.getByText('Password must contain uppercase, lowercase, and a number')).toBeInTheDocument();
+        expect(
+          screen.getByText('Password must contain uppercase, lowercase, and a number'),
+        ).toBeInTheDocument();
       });
     });
   });
@@ -290,7 +294,9 @@ describe('RegisterPage', () => {
     it('should show error message on registration failure', async () => {
       const user = userEvent.setup();
       vi.mocked(authLib.registerUser).mockRejectedValueOnce(new Error('Registration failed'));
-      vi.mocked(authLib.getAuthErrorMessage).mockReturnValueOnce('An account with this email already exists');
+      vi.mocked(authLib.getAuthErrorMessage).mockReturnValueOnce(
+        'An account with this email already exists',
+      );
 
       render(<RegisterPage />);
 
@@ -301,7 +307,9 @@ describe('RegisterPage', () => {
       await user.click(screen.getByRole('button', { name: /create account/i }));
 
       await waitFor(() => {
-        expect(screen.getByRole('alert')).toHaveTextContent('An account with this email already exists');
+        expect(screen.getByRole('alert')).toHaveTextContent(
+          'An account with this email already exists',
+        );
       });
     });
 
@@ -313,7 +321,6 @@ describe('RegisterPage', () => {
 
       expect(authLib.registerUser).not.toHaveBeenCalled();
     });
-
   });
 
   describe('Google OAuth', () => {
@@ -340,5 +347,4 @@ describe('RegisterPage', () => {
       });
     });
   });
-
 });

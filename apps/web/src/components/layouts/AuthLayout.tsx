@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Leaf } from 'lucide-react';
-import { assets } from '../../config';
+import { assets } from '@/config';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
