@@ -6,7 +6,7 @@ db.createCollection('users', {
   validator: {
     $jsonSchema: {
       bsonType: 'object',
-      required: ['email', 'username', 'password'],
+      required: ['email', 'username'],
       properties: {
         email: {
           bsonType: 'string',
@@ -18,6 +18,13 @@ db.createCollection('users', {
           maxLength: 30,
         },
         password: {
+          bsonType: 'string',
+        },
+        authProvider: {
+          bsonType: 'string',
+          enum: ['local', 'google'],
+        },
+        googleId: {
           bsonType: 'string',
         },
       },
