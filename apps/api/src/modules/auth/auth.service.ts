@@ -24,6 +24,9 @@ export class AuthService {
       throw new ConflictException('User with this email already exists');
     }
 
+    // TODO: Add a check for existing username to prevent 500 error on duplicate usernames.
+    // The partner should implement `this.usersService.findByUsername` and throw a 409 ConflictException if the username is taken.
+
     const hashedPassword = await bcrypt.hash(registrationData.password, 10);
     const user = await this.usersService.create({
       ...registrationData,
