@@ -7,6 +7,7 @@ import { PlantsModule } from './modules/plants/plants.module';
 import { PostsModule } from './modules/posts/posts.module';
 import { CommentsModule } from './modules/comments/comments.module';
 import { LikesModule } from './modules/likes/likes.module';
+import { SpeciesModule } from './modules/species/species.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { LikesModule } from './modules/likes/likes.module';
     PostsModule,
     CommentsModule,
     LikesModule,
+    SpeciesModule,
   ],
 })
 export class AppModule {}
