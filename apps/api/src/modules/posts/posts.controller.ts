@@ -14,6 +14,7 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
+  ApiParam,
 } from '@nestjs/swagger';
 import { PostsService } from './posts.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -62,6 +63,7 @@ export class PostsController {
   }
 
   @Get(':id')
+  @ApiParam({ name: 'id', description: 'Post ID', type: String })
   @ApiOperation({ summary: 'Retrieve a single post by ID' })
   @ApiResponse({
     status: 200,
@@ -74,6 +76,7 @@ export class PostsController {
   }
 
   @Patch(':id')
+  @ApiParam({ name: 'id', description: 'Post ID', type: String })
   @UseGuards(PostOwnerGuard)
   @ApiOperation({ summary: 'Update a post' })
   @ApiResponse({
@@ -90,6 +93,7 @@ export class PostsController {
   }
 
   @Delete(':id')
+  @ApiParam({ name: 'id', description: 'Post ID', type: String })
   @UseGuards(PostOwnerGuard)
   @ApiOperation({ summary: 'Delete a post' })
   @ApiResponse({
