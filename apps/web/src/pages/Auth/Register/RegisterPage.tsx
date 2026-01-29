@@ -37,10 +37,16 @@ export function RegisterPage(): JSX.Element {
 
   const validateForm = (): boolean => {
     const errors: FieldErrors = {};
-    errors.username = validateUsername(username, 'REGISTER');
-    errors.email = validateEmail(email, 'REGISTER');
-    errors.password = validatePassword(password, 'REGISTER');
-    errors.confirmPassword = validateConfirmPassword(password, confirmPassword);
+    const usernameError = validateUsername(username, 'REGISTER');
+    const emailError = validateEmail(email, 'REGISTER');
+    const passwordError = validatePassword(password, 'REGISTER');
+    const confirmPasswordError = validateConfirmPassword(password, confirmPassword);
+
+    if (usernameError) errors.username = usernameError;
+    if (emailError) errors.email = emailError;
+    if (passwordError) errors.password = passwordError;
+    if (confirmPasswordError) errors.confirmPassword = confirmPasswordError;
+
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
