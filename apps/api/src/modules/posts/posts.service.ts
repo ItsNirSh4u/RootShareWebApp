@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Post, PostDocument } from './schemas/post.schema';
@@ -15,7 +11,7 @@ export class PostsService {
 
   async create(
     userId: string,
-    createPostDto: CreatePostDto
+    createPostDto: CreatePostDto,
   ): Promise<PostDocument> {
     const newPost = new this.postModel({
       ...createPostDto,
@@ -25,7 +21,6 @@ export class PostsService {
   }
 
   async findAll(): Promise<PostDocument[]> {
-    // TODO: Add population to get user details
     return this.postModel.find().sort({ createdAt: -1 }).exec();
   }
 
@@ -38,49 +33,16 @@ export class PostsService {
   }
 
   async update(
-    id: string,
-    userId: string,
-    updatePostDto: UpdatePostDto
+    post: PostDocument,
+    updatePostDto: UpdatePostDto,
   ): Promise<PostDocument> {
-    const existingPost = await this.postModel
-      .findOneAndUpdate({ _id: id, userId: new Types.ObjectId(userId) }, updatePostDto, {
-        new: true,
-      })
-      .exec();
-
-    if (!existingPost) {
-      // We check if the post exists at all to give a more specific error.
-      const postExists = await this.postModel.findById(id).exec();
-      if (!postExists) {
-        throw new NotFoundException(`Post with ID "${id}" not found`);
-      } else {
-        throw new ForbiddenException(
-          `You do not have permission to update this post.`
-        );
-      }
-    }
-    return existingPost;
+    Object.assign(post, updatePostDto);
+    return post.save();
   }
 
-  async remove(
-    id: string,
-    userId: string
-  ): Promise<{ deleted: boolean; id: string }> {
-    const result = await this.postModel
-      .deleteOne({ _id: id, userId: new Types.ObjectId(userId) })
-      .exec();
-
-    if (result.deletedCount === 0) {
-      // We check if the post exists at all to give a more specific error.
-      const postExists = await this.postModel.findById(id).exec();
-      if (!postExists) {
-        throw new NotFoundException(`Post with ID "${id}" not found`);
-      } else {
-        throw new ForbiddenException(
-          `You do not have permission to delete this post.`
-        );
-      }
-    }
+  async remove(post: PostDocument): Promise<{ deleted: boolean; id: string }> {
+    const id = post._id.toString();
+    await post.deleteOne();
     return { deleted: true, id };
   }
 }

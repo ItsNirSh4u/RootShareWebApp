@@ -17,9 +17,15 @@ import {
 } from '@nestjs/swagger';
 import { PostsService } from './posts.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PostOwnerGuard } from './guards/post-owner.guard';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
-import { Post as PostSchema } from './schemas/post.schema'; // Import the schema
+import { Post as PostSchema, PostDocument } from './schemas/post.schema';
+import {
+  ApiUnauthorizedResponse,
+  ApiOwnershipResponses,
+  ApiProtectedReadResponses,
+} from '../../common/decorators';
 
 @ApiTags('posts')
 @Controller('posts')
@@ -35,9 +41,11 @@ export class PostsController {
     description: 'The post has been successfully created.',
     type: PostSchema,
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  create(@Request() req: { user: { id: string } }, @Body() createPostDto: CreatePostDto) {
-    // req.user is populated by JwtAuthGuard
+  @ApiUnauthorizedResponse()
+  create(
+    @Request() req: { user: { id: string } },
+    @Body() createPostDto: CreatePostDto,
+  ) {
     return this.postsService.create(req.user.id, createPostDto);
   }
 
@@ -48,7 +56,7 @@ export class PostsController {
     description: 'A list of all posts.',
     type: [PostSchema],
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiUnauthorizedResponse()
   findAll() {
     return this.postsService.findAll();
   }
@@ -60,40 +68,36 @@ export class PostsController {
     description: 'The post with the specified ID.',
     type: PostSchema,
   })
-  @ApiResponse({ status: 404, description: 'Post not found.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiProtectedReadResponses('Post')
   findOne(@Param('id') id: string) {
     return this.postsService.findOne(id);
   }
 
   @Patch(':id')
+  @UseGuards(PostOwnerGuard)
   @ApiOperation({ summary: 'Update a post' })
   @ApiResponse({
     status: 200,
     description: 'The post has been successfully updated.',
     type: PostSchema,
   })
-  @ApiResponse({ status: 404, description: 'Post not found.' })
-  @ApiResponse({ status: 403, description: 'Forbidden.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiOwnershipResponses('Post')
   update(
-    @Param('id') id: string,
-    @Request() req: { user: { id: string } },
-    @Body() updatePostDto: UpdatePostDto
+    @Request() req: { user: { id: string }; post: PostDocument },
+    @Body() updatePostDto: UpdatePostDto,
   ) {
-    return this.postsService.update(id, req.user.id, updatePostDto);
+    return this.postsService.update(req.post, updatePostDto);
   }
 
   @Delete(':id')
+  @UseGuards(PostOwnerGuard)
   @ApiOperation({ summary: 'Delete a post' })
   @ApiResponse({
     status: 200,
     description: 'The post has been successfully deleted.',
   })
-  @ApiResponse({ status: 404, description: 'Post not found.' })
-  @ApiResponse({ status: 403, description: 'Forbidden.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  remove(@Param('id') id: string, @Request() req: { user: { id: string } }) {
-    return this.postsService.remove(id, req.user.id);
+  @ApiOwnershipResponses('Post')
+  remove(@Request() req: { post: PostDocument }) {
+    return this.postsService.remove(req.post);
   }
 }
