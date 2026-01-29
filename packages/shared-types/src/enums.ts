@@ -19,3 +19,9 @@ export enum AuthProvider {
   LOCAL = 'local',
   GOOGLE = 'google',
 }
+
+export enum SpeciesRequestStatus {
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+}
