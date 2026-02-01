@@ -77,6 +77,24 @@ export class PlantsController {
     return this.plantsService.findAll(req.user.id, status ? { status } : undefined);
   }
 
+  @Get('featured')
+  @ApiOperation({ summary: 'Get featured plants from all users' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Maximum number of plants to return (default: 10)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'A list of featured plants from all users.',
+    type: [Plant],
+  })
+  @ApiUnauthorizedResponse()
+  findFeatured(@Query('limit') limit?: number) {
+    return this.plantsService.findFeatured(limit || 10);
+  }
+
   @Get(':id')
   @ApiParam({ name: 'id', description: 'Plant ID', type: String })
   @UseGuards(PlantOwnerGuard)
