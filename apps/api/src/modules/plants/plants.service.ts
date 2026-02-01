@@ -22,7 +22,6 @@ export class PlantsService {
     userId: string,
     createPlantDto: CreatePlantDto,
   ): Promise<PlantDocument> {
-    // Validate that the species exists in the approved list
     const speciesExists = await this.speciesService.speciesExists(
       createPlantDto.species,
     );
@@ -57,6 +56,14 @@ export class PlantsService {
     return this.plantModel.find(query).sort({ createdAt: -1 }).exec();
   }
 
+  async findFeatured(limit: number = 10): Promise<PlantDocument[]> {
+    return this.plantModel
+      .find({ status: PlantStatus.ACTIVE })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .exec();
+  }
+
   async findOne(id: string): Promise<PlantDocument> {
     const plant = await this.plantModel.findById(id).exec();
 
@@ -71,7 +78,6 @@ export class PlantsService {
     plant: PlantDocument,
     updatePlantDto: UpdatePlantDto,
   ): Promise<PlantDocument> {
-    // If species is being updated, validate it
     if (updatePlantDto.species) {
       const speciesExists = await this.speciesService.speciesExists(
         updatePlantDto.species,
