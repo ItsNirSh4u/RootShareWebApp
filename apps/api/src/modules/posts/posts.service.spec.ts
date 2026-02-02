@@ -77,9 +77,9 @@ describe('PostsService', () => {
     it('should return all posts sorted by createdAt desc', async () => {
       const mockPosts = [mockPost, { ...mockPost, _id: new Types.ObjectId() }];
       mockPostModel.find.mockReturnValue({
-        sort: jest.fn().mockReturnValue({
-          exec: jest.fn().mockResolvedValue(mockPosts),
-        }),
+        sort: jest.fn().mockReturnThis(),
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(mockPosts),
       });
 
       const result = await service.findAll();
@@ -92,6 +92,7 @@ describe('PostsService', () => {
   describe('findOne', () => {
     it('should return a post by id', async () => {
       mockPostModel.findById.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(mockPost),
       });
 
@@ -103,6 +104,7 @@ describe('PostsService', () => {
 
     it('should throw NotFoundException if post not found', async () => {
       mockPostModel.findById.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(null),
       });
 
