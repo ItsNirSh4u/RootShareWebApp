@@ -55,60 +55,31 @@ export class CommentsService {
     return this.commentModel
       .find({ postId: new Types.ObjectId(postId) })
       .populate('userId', 'username profileImageUrl') // Populate user details
+      .populate('likesCount') // Populate likes count
       .sort({ createdAt: 'asc' })
       .exec();
   }
 
   async update(
-    commentId: string,
-    userId: string,
+    comment: CommentDocument,
     updateCommentDto: UpdateCommentDto
   ): Promise<CommentDocument> {
-    const existingComment = await this.commentModel
-      .findOneAndUpdate(
-        { _id: commentId, userId: new Types.ObjectId(userId) },
-        { content: updateCommentDto.content },
-        { new: true }
-      )
-      .exec();
-
-    if (!existingComment) {
-      const commentExists = await this.commentModel.findById(commentId).exec();
-      if (!commentExists) {
-        throw new NotFoundException(`Comment with ID "${commentId}" not found`);
-      } else {
-        throw new ForbiddenException(
-          `You do not have permission to update this comment.`
-        );
-      }
-    }
-    return existingComment;
+    Object.assign(comment, updateCommentDto);
+    return comment.save();
   }
 
   async remove(
-    commentId: string,
-    userId: string
+    comment: CommentDocument
   ): Promise<{ deleted: boolean; id: string }> {
-    const comment = await this.commentModel.findById(commentId).exec();
-    if (!comment) {
-      throw new NotFoundException(`Comment with ID "${commentId}" not found`);
-    }
+    const id = comment._id.toString();
 
-    if (comment.userId.toString() !== userId) {
-      throw new ForbiddenException(
-        `You do not have permission to delete this comment.`
-      );
-    }
+    await comment.deleteOne();
 
-    const result = await this.commentModel.deleteOne({ _id: commentId }).exec();
+    // Decrement the commentsCount on the post
+    await this.postModel.findByIdAndUpdate(comment.postId, {
+      $inc: { commentsCount: -1 },
+    });
 
-    if (result.deletedCount > 0) {
-      // Decrement the commentsCount on the post
-      await this.postModel.findByIdAndUpdate(comment.postId, {
-        $inc: { commentsCount: -1 },
-      });
-    }
-
-    return { deleted: true, id: commentId };
+    return { deleted: true, id };
   }
 }

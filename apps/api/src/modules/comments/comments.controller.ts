@@ -14,12 +14,17 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
+  ApiParam,
 } from '@nestjs/swagger';
 import { CommentsService } from './comments.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
-import { Comment as CommentSchema } from './schemas/comment.schema';
+import {
+  Comment as CommentSchema,
+  CommentDocument,
+} from './schemas/comment.schema';
+import { CommentOwnerGuard } from './guards/comment-owner.guard';
 
 @ApiTags('comments')
 @Controller('comments')
@@ -57,7 +62,8 @@ export class CommentsController {
     return this.commentsService.findAllForPost(postId);
   }
 
-  @Patch(':id')
+  @Patch()
+  @UseGuards(CommentOwnerGuard)
   @ApiOperation({ summary: 'Update a comment' })
   @ApiResponse({
     status: 200,
@@ -68,15 +74,16 @@ export class CommentsController {
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   @ApiResponse({ status: 404, description: 'Comment not found.' })
   update(
-    @Param('id') id: string,
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string }; comment: CommentDocument },
     @Body() updateCommentDto: UpdateCommentDto
   ) {
-    return this.commentsService.update(id, req.user.id, updateCommentDto);
+    return this.commentsService.update(req.comment, updateCommentDto);
   }
 
   @Delete(':id')
+  @UseGuards(CommentOwnerGuard)
   @ApiOperation({ summary: 'Delete a comment' })
+  @ApiParam({ name: 'id', type: 'string' })
   @ApiResponse({
     status: 200,
     description: 'The comment has been successfully deleted.',
@@ -84,7 +91,7 @@ export class CommentsController {
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   @ApiResponse({ status: 404, description: 'Comment not found.' })
-  remove(@Param('id') id: string, @Request() req: { user: { id: string } }) {
-    return this.commentsService.remove(id, req.user.id);
+  remove(@Request() req: { comment: CommentDocument }) {
+    return this.commentsService.remove(req.comment);
   }
 }

@@ -1,7 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PostsService } from './posts.service';
+import { PlantsService } from '../plants/plants.service';
 import { Post } from './schemas/post.schema';
 import { PostType } from '@rootshare/shared-types';
 import { Types } from 'mongoose';
@@ -9,6 +10,7 @@ import { Types } from 'mongoose';
 describe('PostsService', () => {
   let service: PostsService;
   let mockPostModel: any;
+  let mockPlantsService: any;
 
   const mockUserId = new Types.ObjectId().toString();
   const mockPostId = new Types.ObjectId();
@@ -38,12 +40,20 @@ describe('PostsService', () => {
       findById: jest.fn(),
     });
 
+    mockPlantsService = {
+      findOne: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PostsService,
         {
           provide: getModelToken(Post.name),
           useValue: mockPostModel,
+        },
+        {
+          provide: PlantsService,
+          useValue: mockPlantsService,
         },
       ],
     }).compile();
@@ -71,15 +81,47 @@ describe('PostsService', () => {
       });
       expect(result).toHaveProperty('content', createPostDto.content);
     });
+
+    it('should validate plant ownership when plantId provided', async () => {
+      const plantId = new Types.ObjectId().toString();
+      const createWithPlant = { ...createPostDto, plantId };
+
+      mockPlantsService.findOne.mockResolvedValue({
+        _id: new Types.ObjectId(plantId),
+        userId: new Types.ObjectId(mockUserId),
+      });
+
+      const result = await service.create(mockUserId, createWithPlant);
+
+      expect(mockPlantsService.findOne).toHaveBeenCalledWith(plantId);
+      expect(mockPostModel).toHaveBeenCalledWith({
+        ...createWithPlant,
+        userId: expect.any(Types.ObjectId),
+      });
+    });
+
+    it('should reject when plant does not belong to user', async () => {
+      const plantId = new Types.ObjectId().toString();
+      const createWithPlant = { ...createPostDto, plantId };
+
+      mockPlantsService.findOne.mockResolvedValue({
+        _id: new Types.ObjectId(plantId),
+        userId: new Types.ObjectId(), // different owner
+      });
+
+      await expect(service.create(mockUserId, createWithPlant)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
   });
 
   describe('findAll', () => {
     it('should return all posts sorted by createdAt desc', async () => {
       const mockPosts = [mockPost, { ...mockPost, _id: new Types.ObjectId() }];
       mockPostModel.find.mockReturnValue({
-        sort: jest.fn().mockReturnValue({
-          exec: jest.fn().mockResolvedValue(mockPosts),
-        }),
+        sort: jest.fn().mockReturnThis(),
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(mockPosts),
       });
 
       const result = await service.findAll();
@@ -92,6 +134,7 @@ describe('PostsService', () => {
   describe('findOne', () => {
     it('should return a post by id', async () => {
       mockPostModel.findById.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(mockPost),
       });
 
@@ -103,6 +146,7 @@ describe('PostsService', () => {
 
     it('should throw NotFoundException if post not found', async () => {
       mockPostModel.findById.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(null),
       });
 
@@ -127,6 +171,23 @@ describe('PostsService', () => {
 
       expect(postDocument.save).toHaveBeenCalled();
       expect(result.content).toBe(updatePostDto.content);
+    });
+
+    it('should throw when updating with plantId not owned by post owner', async () => {
+      const updateDto = { plantId: new Types.ObjectId().toString() };
+      const postDocument = {
+        ...mockPost,
+        save: jest.fn().mockResolvedValue({ ...mockPost, ...updateDto }),
+      };
+
+      mockPlantsService.findOne.mockResolvedValue({
+        _id: new Types.ObjectId(updateDto.plantId),
+        userId: new Types.ObjectId(),
+      });
+
+      await expect(service.update(postDocument as any, updateDto)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 

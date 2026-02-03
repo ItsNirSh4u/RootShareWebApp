@@ -1,14 +1,68 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Like, LikeDocument } from './schemas/like.schema';
 
 @Injectable()
 export class LikesService {
   constructor(@InjectModel(Like.name) private likeModel: Model<LikeDocument>) {}
 
-  // TODO: Implement like operations
-  // - toggleLike(postId: string, userId: string) - Like/Unlike toggle
-  // - checkLike(postId: string, userId: string) - Check if user liked
-  // - countLikes(postId: string) - Count total likes
+  async toggleLike(
+    parentType: 'Post' | 'Comment',
+    parentId: string,
+    userId: string
+  ): Promise<{ liked: boolean }> {
+    const like = await this.likeModel.findOne({
+      parentType,
+      parentId: new Types.ObjectId(parentId),
+      userId: new Types.ObjectId(userId),
+    });
+
+    if (like) {
+      await like.deleteOne();
+      return { liked: false };
+    } else {
+      const newLike = new this.likeModel({
+        parentType,
+        parentId: new Types.ObjectId(parentId),
+        userId: new Types.ObjectId(userId),
+      });
+      await newLike.save();
+      return { liked: true };
+    }
+  }
+
+  async getLikesByParentId(
+    parentType: 'Post' | 'Comment',
+    parentId: string
+  ): Promise<LikeDocument[]> {
+    return this.likeModel
+      .find({ parentType, parentId: new Types.ObjectId(parentId) })
+      .exec();
+  }
+
+  async isLiked(
+    parentType: 'Post' | 'Comment',
+    parentId: string,
+    userId: string
+  ): Promise<{ liked: boolean }> {
+    const like = await this.likeModel.findOne({
+      parentType,
+      parentId: new Types.ObjectId(parentId),
+      userId: new Types.ObjectId(userId),
+    });
+
+    return { liked: !!like };
+  }
+
+  async countLikes(
+    parentType: 'Post' | 'Comment',
+    parentId: string
+  ): Promise<{ likes: number }> {
+    const count = await this.likeModel.countDocuments({
+      parentType,
+      parentId: new Types.ObjectId(parentId),
+    });
+    return { likes: count };
+  }
 }
