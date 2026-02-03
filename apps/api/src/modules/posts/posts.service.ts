@@ -1,18 +1,29 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Post, PostDocument } from './schemas/post.schema';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { PlantsService } from '../plants/plants.service';
 
 @Injectable()
 export class PostsService {
-  constructor(@InjectModel(Post.name) private postModel: Model<PostDocument>) {}
+  constructor(
+    @InjectModel(Post.name) private postModel: Model<PostDocument>,
+    private plantsService: PlantsService,
+  ) {}
 
   async create(
     userId: string,
     createPostDto: CreatePostDto,
   ): Promise<PostDocument> {
+    if (createPostDto.plantId) {
+      const plant = await this.plantsService.findOne(createPostDto.plantId);
+      if (plant.userId.toString() !== userId) {
+        throw new ForbiddenException('Plant does not belong to the user');
+      }
+    }
+
     const newPost = new this.postModel({
       ...createPostDto,
       userId: new Types.ObjectId(userId),
@@ -21,11 +32,20 @@ export class PostsService {
   }
 
   async findAll(): Promise<PostDocument[]> {
-    return this.postModel.find().sort({ createdAt: -1 }).populate('likesCount').exec();
+    return this.postModel
+      .find()
+      .sort({ createdAt: -1 })
+      .populate('likesCount')
+      .populate('plantId')
+      .exec();
   }
 
   async findOne(id: string): Promise<PostDocument> {
-    const post = await this.postModel.findById(id).populate('likesCount').exec();
+    const post = await this.postModel
+      .findById(id)
+      .populate('likesCount')
+      .populate('plantId')
+      .exec();
     if (!post) {
       throw new NotFoundException(`Post with ID "${id}" not found`);
     }
@@ -36,6 +56,13 @@ export class PostsService {
     post: PostDocument,
     updatePostDto: UpdatePostDto,
   ): Promise<PostDocument> {
+    if (updatePostDto.plantId) {
+      const plant = await this.plantsService.findOne(updatePostDto.plantId);
+      if (plant.userId.toString() !== post.userId.toString()) {
+        throw new ForbiddenException('Plant does not belong to the post owner');
+      }
+    }
+
     Object.assign(post, updatePostDto);
     return post.save();
   }

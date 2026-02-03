@@ -15,6 +15,9 @@ import {
   ApiOperation,
   ApiResponse,
   ApiParam,
+  ApiBadRequestResponse,
+  ApiNotFoundResponse,
+  ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { PostsService } from './posts.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -42,6 +45,9 @@ export class PostsController {
     description: 'The post has been successfully created.',
     type: PostSchema,
   })
+  @ApiBadRequestResponse({ description: 'Invalid payload (e.g., invalid plantId format)' })
+  @ApiNotFoundResponse({ description: 'Referenced plant not found' })
+  @ApiForbiddenResponse({ description: 'Plant does not belong to the user' })
   @ApiUnauthorizedResponse()
   create(
     @Request() req: { user: { id: string } },
@@ -79,6 +85,7 @@ export class PostsController {
   @ApiParam({ name: 'id', description: 'Post ID', type: String })
   @UseGuards(PostOwnerGuard)
   @ApiOperation({ summary: 'Update a post' })
+  @ApiBadRequestResponse({ description: 'Invalid payload (e.g., invalid plantId format)' })
   @ApiResponse({
     status: 200,
     description: 'The post has been successfully updated.',
