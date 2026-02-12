@@ -19,7 +19,9 @@
     "clean": "turbo run clean && rm -rf node_modules",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
-    "docker:logs": "docker-compose logs -f"
+    "docker:logs": "docker-compose logs -f",
+    "seed": "docker exec -i rootshare-mongodb mongosh \"mongodb://rootshare:rootshare123@localhost:27017/rootshare?authSource=admin\" < scripts/seed-feed.js",
+    "seed:win": "scripts\\seed.bat"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
