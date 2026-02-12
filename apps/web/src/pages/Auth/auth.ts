@@ -77,6 +77,7 @@ export const validateUsername = (
       return 'Username can only contain letters, numbers, and underscores';
     }
   }
+  return undefined;
 };
 
 export const validateEmail = (
@@ -90,6 +91,7 @@ export const validateEmail = (
       ? 'Please enter a valid email address'
       : 'Invalid email format';
   }
+  return undefined;
 };
 
 export const validatePassword = (
@@ -113,6 +115,7 @@ export const validatePassword = (
       return 'Password must contain at least one number';
     }
   }
+  return undefined;
 };
 
 export const validateConfirmPassword = (
@@ -122,4 +125,5 @@ export const validateConfirmPassword = (
   if (password !== confirmPassword) {
     return 'Passwords do not match';
   }
+  return undefined;
 };
