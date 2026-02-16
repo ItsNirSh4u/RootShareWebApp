@@ -52,11 +52,11 @@ export class ChatController {
   // --- Parameterized :chatId endpoints ---
 
   @Get(':chatId/messages')
-  getMessagesForChat(
+  loadMessagesById(
     @Param('chatId') chatId: string,
     @Query() getMessagesDto: GetMessagesDto,
   ) {
-    return this.chatService.getMessagesForChat(chatId, getMessagesDto);
+    return this.chatService.loadMessagesById(chatId, getMessagesDto);
   }
 
   @Post(':chatId/read')

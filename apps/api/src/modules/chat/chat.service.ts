@@ -82,7 +82,7 @@ export class ChatService {
       });
   }
 
-  async getMessagesForChat(
+  async loadMessagesById(
     chatId: string,
     getMessagesDto: GetMessagesDto,
   ): Promise<Message[]> {
