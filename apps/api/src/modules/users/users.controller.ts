@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery }
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { IRequest } from 'src/common/interfaces/request.interface';
+import { IRequest } from '@/common/interfaces/request.interface';
 
 @ApiTags('users')
 @Controller('users')

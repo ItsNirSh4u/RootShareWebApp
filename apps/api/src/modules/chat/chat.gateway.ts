@@ -14,7 +14,7 @@ import { MessageDocument } from './schemas/message.schema';
 
 @WebSocketGateway({
   cors: {
-    origin: '*', // In production, specify your Android app
+    origin: '*', // TODO: In production, restrict to your domain (e.g. 'https://rootshare.com') to prevent unauthorized cross-origin connections
   },
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -108,5 +108,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       userId: client.data.userId,
       isTyping,
     });
+  }
+
+  emitToRoom(roomId: string, event: string, data: any) {
+    this.server.to(roomId).emit(event, data);
   }
 }

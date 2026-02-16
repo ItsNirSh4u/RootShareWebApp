@@ -5,7 +5,9 @@ import { Message, MessageSchema } from './schemas/message.schema';
 import { ChatGateway } from './chat.gateway';
 import { ChatService } from './chat.service';
 import { ChatController } from './chat.controller';
-import { UsersModule } from '../users/users.module';
+import { ChatMemberGuard } from './guards/chat-member.guard';
+import { ChatAdminGuard } from './guards/chat-admin.guard';
+import { UsersModule } from '@/modules/users/users.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
@@ -28,7 +30,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       }),
     }),
   ],
-  providers: [ChatGateway, ChatService],
+  providers: [ChatGateway, ChatService, ChatMemberGuard, ChatAdminGuard],
   controllers: [ChatController],
 })
 export class ChatModule {}
