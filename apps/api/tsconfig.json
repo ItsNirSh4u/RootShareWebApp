@@ -20,7 +20,8 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "paths": {
-      "@rootshare/shared-types": ["../../packages/shared-types/src"]
+      "@rootshare/shared-types": ["../../packages/shared-types/src"],
+      "@/*": ["src/*"]
     }
   },
   "include": ["src/**/*"],
