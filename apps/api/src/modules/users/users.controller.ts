@@ -1,9 +1,63 @@
-import { Controller, Get, Put, Body, Param, UseGuards, Request, Query, Req } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Put,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+  Query,
+  Req,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+  ApiQuery,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import * as path from 'path';
+import * as fs from 'fs';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { IRequest } from '@/common/interfaces/request.interface';
+
+const getProfileImagesDir = (): string => {
+  const uploadPath = process.env.UPLOAD_PATH || './uploads';
+  const dir = path.join(uploadPath, 'profile-images');
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  return dir;
+};
+
+const profileImageStorage = diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, getProfileImagesDir());
+  },
+  filename: (_req, file, cb) => {
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    const ext = path.extname(file.originalname) || '.jpg';
+    cb(null, `profile-${uniqueSuffix}${ext}`);
+  },
+});
+
+const imageFileFilter = (_req: any, file: any, cb: any) => {
+  if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
+    return cb(new BadRequestException('Only image files are allowed'), false);
+  }
+  cb(null, true);
+};
 
 @ApiTags('users')
 @Controller('users')
@@ -36,5 +90,37 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateProfile(@Request() req: any, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(req.user.id, updateUserDto);
+  }
+
+  @Post('profile/image')
+  @ApiOperation({ summary: 'Upload profile image' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        image: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Profile image uploaded successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid file' })
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: profileImageStorage,
+      fileFilter: imageFileFilter,
+      limits: { fileSize: 5 * 1024 * 1024 },
+    }),
+  )
+  async uploadProfileImage(
+    @Request() req: any,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Image file is required');
+    }
+
+    const localProfileImageUrl = `/uploads/profile-images/${file.filename}`;
+    return this.usersService.update(req.user.id, { localProfileImageUrl });
   }
 }
