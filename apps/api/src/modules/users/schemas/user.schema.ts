@@ -18,6 +18,9 @@ export class User {
   @Prop({ default: null })
   profileImageUrl?: string;
 
+  @Prop({ default: null })
+  localProfileImageUrl?: string;
+
   @Prop({ type: String, enum: UserRole, default: UserRole.USER })
   role: UserRole;
 

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
@@ -8,10 +8,13 @@ import * as https from 'https';
 import * as http from 'http';
 import { UsersService } from '../users/users.service';
 import { IAuthResponse, IUserRegistration, IUserLogin, AuthProvider } from '@rootshare/shared-types';
+import { OAuth2Client } from 'google-auth-library';
 import { GoogleProfile } from './strategies/google.strategy';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
@@ -95,7 +98,7 @@ export class AuthService {
 
   async validateGoogleUser(googleProfile: GoogleProfile): Promise<IAuthResponse> {
     const { googleId, email, firstName, lastName, picture } = googleProfile;
-
+    
     // Check if user already exists with this Google ID
     let user = await this.usersService.findByGoogleId(googleId);
 
@@ -123,10 +126,14 @@ export class AuthService {
       );
     }
 
-    // Download Google profile image locally
+    // Download Google profile image locally as fallback
     let localProfileImageUrl: string | undefined;
     if (picture) {
-      localProfileImageUrl = await this.downloadProfileImage(picture, googleId);
+      try {
+        localProfileImageUrl = await this.downloadProfileImage(picture, googleId);
+      } catch (error) {
+        this.logger.warn(`Failed to download Google profile image for ${googleId}: ${error.message}`);
+      }
     }
 
     // Create new user with Google OAuth
@@ -136,7 +143,8 @@ export class AuthService {
       username,
       googleId,
       authProvider: AuthProvider.GOOGLE,
-      profileImageUrl: localProfileImageUrl,
+      profileImageUrl: picture,
+      localProfileImageUrl,
     });
 
     const tokens = await this.generateTokens(newUser.id, newUser.email);
@@ -155,15 +163,17 @@ export class AuthService {
     // For production, use google-auth-library's OAuth2Client.verifyIdToken()
     // This is a simplified implementation that decodes and validates the token
     const googleClientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
+    const googleMobileClientId = this.configService.get<string>('GOOGLE_MOBILE_CLIENT_ID');
+
+    // Accept tokens from both web and mobile client IDs
+    const validAudiences = [googleClientId, googleMobileClientId].filter(Boolean) as string[];
 
     try {
-      // Dynamically import google-auth-library to verify the token
-      const { OAuth2Client } = await import('google-auth-library');
       const client = new OAuth2Client(googleClientId);
 
       const ticket = await client.verifyIdToken({
         idToken,
-        audience: googleClientId,
+        audience: validAudiences,
       });
 
       const payload = ticket.getPayload();
