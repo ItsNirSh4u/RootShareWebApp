@@ -29,6 +29,7 @@ pnpm dev
 - API: http://localhost:3000/api
 - Swagger Docs: http://localhost:3000/api/docs
 - MongoDB UI: http://localhost:8081 (admin/admin123)
+- Axiom: https://app.axiom.co/rootshare-mg4n/query?qid=vBuDFYB1zHu-talub1&relative=1
 
 ---
 
