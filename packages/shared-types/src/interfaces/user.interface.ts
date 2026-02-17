@@ -5,6 +5,7 @@ export interface IUser {
   email: string;
   username: string;
   profileImageUrl?: string;
+  localProfileImageUrl?: string;
   role: UserRole;
   authProvider: AuthProvider;
   googleId?: string;

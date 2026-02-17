@@ -15,6 +15,7 @@ export class UsersService {
     authProvider?: AuthProvider;
     googleId?: string;
     profileImageUrl?: string;
+    localProfileImageUrl?: string;
   }): Promise<IUser> {
     const user = new this.userModel(userData);
     const savedUser = await user.save();
