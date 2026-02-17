@@ -39,7 +39,7 @@ pnpm dev
 - **Monorepo**: Turborepo with pnpm workspaces
 - **Database**: MongoDB (Docker)
 - **Testing**: Jest (API) + Playwright (E2E)
-
+- **Logging**: nestjs-pino logger, Axiom endpoint.
 ---
 
 ## Project Structure
