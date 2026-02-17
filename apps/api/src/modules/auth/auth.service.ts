@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
@@ -13,6 +13,8 @@ import { GoogleProfile } from './strategies/google.strategy';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
@@ -129,8 +131,8 @@ export class AuthService {
     if (picture) {
       try {
         localProfileImageUrl = await this.downloadProfileImage(picture, googleId);
-      } catch {
-        // If download fails, we still have the Google URL as primary
+      } catch (error) {
+        this.logger.warn(`Failed to download Google profile image for ${googleId}: ${error.message}`);
       }
     }
 
