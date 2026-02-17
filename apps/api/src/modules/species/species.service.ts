@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   ConflictException,
   BadRequestException,
@@ -18,13 +19,14 @@ import { SpeciesRequestStatus } from '@rootshare/shared-types';
 
 @Injectable()
 export class SpeciesService {
+  private readonly logger = new Logger(SpeciesService.name);
+
   constructor(
     @InjectModel(Species.name) private speciesModel: Model<SpeciesDocument>,
     @InjectModel(SpeciesRequest.name)
     private speciesRequestModel: Model<SpeciesRequestDocument>,
   ) {}
 
-  // ========== Species CRUD (Admin only for create/update/delete) ==========
 
   async createSpecies(createSpeciesDto: CreateSpeciesDto): Promise<SpeciesDocument> {
     const existingSpecies = await this.speciesModel
@@ -70,13 +72,11 @@ export class SpeciesService {
     return { deleted: true, id };
   }
 
-  // ========== Species Requests (Users can create, Admin can review) ==========
 
   async createSpeciesRequest(
     userId: string,
     createRequestDto: CreateSpeciesRequestDto,
   ): Promise<SpeciesRequestDocument> {
-    // Check if species already exists
     const existingSpecies = await this.findSpeciesByName(createRequestDto.name);
     if (existingSpecies) {
       throw new ConflictException(
@@ -103,7 +103,9 @@ export class SpeciesService {
       userId: new Types.ObjectId(userId),
     });
 
-    return newRequest.save();
+    const saved = await newRequest.save();
+    this.logger.log({ userId, speciesName: createRequestDto.name, event: 'species_request_created' }, `Species request submitted: ${createRequestDto.name}`);
+    return saved;
   }
 
   async findAllSpeciesRequests(
@@ -175,6 +177,11 @@ export class SpeciesService {
         description: request.description,
       });
     }
+
+    this.logger.log(
+      { requestId, adminUserId, speciesName: request.name, status: reviewDto.status, event: 'species_request_reviewed' },
+      `Species request ${reviewDto.status}: ${request.name}`,
+    );
 
     return request;
   }

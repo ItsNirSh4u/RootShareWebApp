@@ -24,6 +24,7 @@ export class AuthService {
   async register(registrationData: IUserRegistration): Promise<IAuthResponse> {
     const existingUser = await this.usersService.findByEmail(registrationData.email);
     if (existingUser) {
+      this.logger.warn({ email: registrationData.email, event: 'register_duplicate' }, 'Registration attempted with existing email');
       throw new ConflictException('User with this email already exists');
     }
 
@@ -41,6 +42,8 @@ export class AuthService {
     // Store hashed refresh token in database
     await this.storeRefreshToken(user.id, tokens.refreshToken);
 
+    this.logger.log({ userId: user.id, authProvider: 'local', event: 'user_registered' }, 'New user registered');
+
     return {
       user,
       tokens,
@@ -50,11 +53,13 @@ export class AuthService {
   async login(loginData: IUserLogin): Promise<IAuthResponse> {
     const user = await this.usersService.findByEmail(loginData.email);
     if (!user) {
+      this.logger.warn({ email: loginData.email, event: 'login_failed', reason: 'user_not_found' }, 'Login failed - user not found');
       throw new UnauthorizedException('Invalid credentials');
     }
 
     const isPasswordValid = await bcrypt.compare(loginData.password, user.password);
     if (!isPasswordValid) {
+      this.logger.warn({ userId: user._id.toString(), event: 'login_failed', reason: 'invalid_password' }, 'Login failed - invalid password');
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -62,6 +67,8 @@ export class AuthService {
 
     // Store hashed refresh token in database
     await this.storeRefreshToken(user._id.toString(), tokens.refreshToken);
+
+    this.logger.log({ userId: user._id.toString(), event: 'login_success', authProvider: 'local' }, 'User logged in');
 
     return {
       user: this.usersService.sanitizeUser(user),
@@ -79,6 +86,7 @@ export class AuthService {
     // Validate the refresh token against stored hash
     const isRefreshTokenValid = await bcrypt.compare(refreshToken, user.refreshToken);
     if (!isRefreshTokenValid) {
+      this.logger.warn({ userId, event: 'token_refresh_failed' }, 'Token refresh failed - invalid refresh token');
       throw new UnauthorizedException('Access denied');
     }
 
@@ -94,6 +102,7 @@ export class AuthService {
   async logout(userId: string): Promise<void> {
     // Delete refresh token from database
     await this.usersService.updateRefreshToken(userId, null);
+    this.logger.log({ userId, event: 'logout' }, 'User logged out');
   }
 
   async validateGoogleUser(googleProfile: GoogleProfile): Promise<IAuthResponse> {
@@ -109,6 +118,8 @@ export class AuthService {
       // Store hashed refresh token
       await this.storeRefreshToken(user._id.toString(), tokens.refreshToken);
 
+      this.logger.log({ userId: user._id.toString(), event: 'login_success', authProvider: 'google' }, 'Google user logged in');
+
       return {
         user: this.usersService.sanitizeUser(user),
         tokens,
@@ -119,8 +130,7 @@ export class AuthService {
     const existingUserByEmail = await this.usersService.findByEmail(email);
 
     if (existingUserByEmail) {
-      // Link Google account to existing user - throw error for security
-      // User should login with password first and then link accounts
+      this.logger.warn({ email, event: 'google_link_conflict' }, 'Google login attempted for existing local account');
       throw new ConflictException(
         'An account with this email already exists. Please login with your password.',
       );
@@ -151,6 +161,8 @@ export class AuthService {
 
     // Store hashed refresh token
     await this.storeRefreshToken(newUser.id, tokens.refreshToken);
+
+    this.logger.log({ userId: newUser.id, authProvider: 'google', event: 'user_registered' }, 'New Google user registered');
 
     return {
       user: newUser,
@@ -191,6 +203,7 @@ export class AuthService {
 
       return this.validateGoogleUser(googleProfile);
     } catch (error) {
+      this.logger.warn({ event: 'google_token_invalid', error: error.message }, 'Google ID token verification failed');
       throw new UnauthorizedException('Invalid Google ID token');
     }
   }

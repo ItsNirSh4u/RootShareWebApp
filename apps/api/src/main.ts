@@ -1,12 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { Logger as PinoLogger } from 'nestjs-pino';
 import * as path from 'path';
 import { AppModule } from './app.module';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
+  app.useLogger(app.get(PinoLogger));
 
   // Serve uploaded files (profile images, etc.)
   const uploadPath = process.env.UPLOAD_PATH || './uploads';
@@ -53,8 +55,9 @@ async function bootstrap(): Promise<void> {
   const port = process.env.PORT || 3000;
   await app.listen(port);
 
-  console.log(`RootShare API running on: http://localhost:${port}/api`);
-  console.log(`Swagger docs: http://localhost:${port}/api/docs`);
+  const logger = new Logger('Bootstrap');
+  logger.log(`RootShare API running on: http://localhost:${port}/api`);
+  logger.log(`Swagger docs: http://localhost:${port}/api/docs`);
 }
 
 bootstrap();

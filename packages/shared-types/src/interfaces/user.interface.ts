@@ -27,6 +27,7 @@ export interface IUserLogin {
 export interface IUserUpdate {
   username?: string;
   profileImageUrl?: string;
+  localProfileImageUrl?: string;
 }
 
 export interface IAuthTokens {
