@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { LoggerModule } from 'nestjs-pino';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { PlantsModule } from './modules/plants/plants.module';
@@ -15,6 +16,44 @@ import { SpeciesModule } from './modules/species/species.module';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+    }),
+
+    // Structured logging with Pino
+    LoggerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const isProduction = configService.get('NODE_ENV') === 'production';
+        const axiomDataset = configService.get<string>('AXIOM_DATASET');
+        const axiomToken = configService.get<string>('AXIOM_TOKEN');
+
+        const targets: any[] = [];
+
+        if (isProduction && axiomDataset && axiomToken) {
+          targets.push({
+            target: '@axiomhq/pino',
+            options: {
+              dataset: axiomDataset,
+              token: axiomToken,
+            },
+          });
+        }
+
+        // Always log to stdout (pretty in dev, JSON in prod)
+        targets.push({
+          target: isProduction ? 'pino/file' : 'pino-pretty',
+          options: isProduction ? {} : { colorize: true },
+        });
+
+        return {
+          pinoHttp: {
+            level: isProduction ? 'info' : 'debug',
+            transport: { targets },
+            autoLogging: {
+              ignore: (req: any) => req.url === '/api/health',
+            },
+          },
+        };
+      },
     }),
 
     // MongoDB connection
