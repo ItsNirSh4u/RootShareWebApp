@@ -8,6 +8,7 @@ import { PostsModule } from './modules/posts/posts.module';
 import { CommentsModule } from './modules/comments/comments.module';
 import { LikesModule } from './modules/likes/likes.module';
 import { SpeciesModule } from './modules/species/species.module';
+import { ChatModule } from './modules/chat/chat.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { SpeciesModule } from './modules/species/species.module';
     CommentsModule,
     LikesModule,
     SpeciesModule,
+    ChatModule,
   ],
 })
 export class AppModule {}

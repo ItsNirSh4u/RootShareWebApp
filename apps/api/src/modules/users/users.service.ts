@@ -67,6 +67,19 @@ export class UsersService {
       .exec();
   }
 
+  async searchUsers(query: string, excludeUserId: string): Promise<IUser[]> {
+    const users = await this.userModel
+      .find({
+        _id: { $ne: excludeUserId },
+        username: { $regex: query, $options: 'i' },
+      })
+      .select('username profileImageUrl')
+      .limit(20)
+      .exec();
+
+    return users.map(user => this.sanitizeUser(user));
+  }
+
   sanitizeUser(user: UserDocument): IUser {
     const userObject = user.toObject();
     const { password, ...sanitized } = userObject;
