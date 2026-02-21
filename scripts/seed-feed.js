@@ -52,7 +52,37 @@ db.posts.deleteMany({});
 db.plants.deleteMany({});
 db.likes.deleteMany({});
 db.comments.deleteMany({});
+db.species.deleteMany({});
 db.users.deleteMany({ email: { $regex: /@example\.com$/ } });
+
+// Seed approved species
+print('Creating approved species...');
+const speciesList = [
+  { name: 'Monstera Deliciosa', scientificName: 'Monstera deliciosa', description: 'Swiss cheese plant with iconic split leaves' },
+  { name: 'Epipremnum aureum', scientificName: 'Epipremnum aureum', description: 'Golden Pothos, easy-care trailing vine' },
+  { name: 'Sansevieria trifasciata', scientificName: 'Dracaena trifasciata', description: 'Snake plant, virtually indestructible' },
+  { name: 'Echeveria elegans', scientificName: 'Echeveria elegans', description: 'Mexican snowball succulent' },
+  { name: 'Ficus lyrata', scientificName: 'Ficus lyrata', description: 'Fiddle leaf fig' },
+  { name: 'Phalaenopsis', scientificName: 'Phalaenopsis spp.', description: 'Moth orchid' },
+  { name: 'Nephrolepis exaltata', scientificName: 'Nephrolepis exaltata', description: 'Boston fern' },
+  { name: 'Opuntia microdasys', scientificName: 'Opuntia microdasys', description: 'Bunny ears cactus' },
+  { name: 'Spathiphyllum', scientificName: 'Spathiphyllum wallisii', description: 'Peace lily' },
+  { name: 'Philodendron hederaceum', scientificName: 'Philodendron hederaceum', description: 'Heartleaf philodendron' },
+  { name: 'Monstera deliciosa variegata', scientificName: 'Monstera deliciosa var. variegata', description: 'Rare variegated monstera' },
+  { name: 'Senecio rowleyanus', scientificName: 'Curio rowleyanus', description: 'String of pearls' },
+  { name: 'Adiantum raddianum', scientificName: 'Adiantum raddianum', description: 'Maidenhair fern' },
+  { name: 'Epipremnum aureum Neon', scientificName: 'Epipremnum aureum Neon', description: 'Neon pothos with bright chartreuse leaves' },
+];
+speciesList.forEach(s => {
+  db.species.insertOne({
+    name: s.name,
+    scientificName: s.scientificName,
+    description: s.description,
+    createdAt: now,
+    updatedAt: now,
+  });
+});
+print(`  ✓ Created ${speciesList.length} species`);
 
 // Test users
 const testUsers = [
