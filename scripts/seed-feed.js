@@ -55,6 +55,14 @@ db.comments.deleteMany({});
 db.species.deleteMany({});
 db.users.deleteMany({ email: { $regex: /@example\.com$/ } });
 
+// Drop stale index from old schema version (postId-based unique index)
+try {
+  db.likes.dropIndex('postId_1_userId_1');
+  print('  ✓ Dropped stale likes index (postId_1_userId_1)');
+} catch (e) {
+  // Index does not exist, nothing to do
+}
+
 // Seed approved species
 print('Creating approved species...');
 const speciesList = [
@@ -154,32 +162,47 @@ userIds.forEach((userId, i) => {
 
 // Posts data
 const postsPerUser = [
-  [{ type: 'update', content: 'My Monstera just unfurled a new leaf! Look at those beautiful fenestrations 🌿 #MonsteraMonday #PlantParent #NewLeaf', plantIdx: 0, images: [plantImages.monstera, postImages[0]] },
-   { type: 'swap', content: 'Looking to swap some Pothos cuttings! They root super easily and are perfect for beginners. DM if interested! #PlantSwap #PothosLovers', plantIdx: 1, images: [plantImages.pothos] }],
+  [{ type: 'update', content: 'My Monstera just unfurled a new leaf! Look at those beautiful fenestrations 🌿 #MonsteraMonday #PlantParent #NewLeaf', plantIdx: 0, images: [plantImages.monstera, postImages[0]],
+     comments: [{ userIdx: 1, content: 'That fenestration is incredible! How old is this plant?' }, { userIdx: 2, content: 'Mine just did the same thing! Monstera Monday is real 🌿' }] },
+   { type: 'swap', content: 'Looking to swap some Pothos cuttings! They root super easily and are perfect for beginners. DM if interested! #PlantSwap #PothosLovers', plantIdx: 1, images: [plantImages.pothos],
+     comments: [{ userIdx: 3, content: "I'm interested! Do you ship or only local pickup?" }, { userIdx: 6, content: 'Pothos are so easy to propagate, great swap idea!' }] }],
 
-  [{ type: 'update', content: 'Snake plants are honestly the most low-maintenance plants ever. Perfect for busy plant parents! #SnakePlant #LowMaintenance', plantIdx: 0, images: [plantImages.snake_plant] },
-   { type: 'giveaway', content: 'Giving away some succulent babies! They need a new home. First come first served in the Tel Aviv area 🌵 #PlantGiveaway #Succulents', plantIdx: 1, images: [plantImages.succulent, postImages[1]] }],
+  [{ type: 'update', content: 'Snake plants are honestly the most low-maintenance plants ever. Perfect for busy plant parents! #SnakePlant #LowMaintenance', plantIdx: 0, images: [plantImages.snake_plant],
+     comments: [{ userIdx: 4, content: 'Totally agree, mine has survived months of neglect 😂' }, { userIdx: 0, content: 'Snake plants are my go-to recommendation for beginners!' }] },
+   { type: 'giveaway', content: 'Giving away some succulent babies! They need a new home. First come first served in the Tel Aviv area 🌵 #PlantGiveaway #Succulents', plantIdx: 1, images: [plantImages.succulent, postImages[1]],
+     comments: [{ userIdx: 5, content: "I'd love one! Are you still in Tel Aviv this weekend?" }, { userIdx: 2, content: 'So generous! I wish I was closer 🌵' }, { userIdx: 6, content: 'Succulents make the best gifts!' }] }],
 
-  [{ type: 'update', content: 'My fiddle leaf fig is finally thriving after months of trial and error! The secret? Consistent watering and lots of light ☀️ #FiddleLeafFig #PlantCare', plantIdx: 0, images: [plantImages.fiddle_leaf, postImages[2]] },
-   { type: 'update', content: 'Orchid bloom season is here! These flowers last for months with proper care #OrchidLove #Blooming', plantIdx: 1, images: [plantImages.orchid] }],
+  [{ type: 'update', content: 'My fiddle leaf fig is finally thriving after months of trial and error! The secret? Consistent watering and lots of light ☀️ #FiddleLeafFig #PlantCare', plantIdx: 0, images: [plantImages.fiddle_leaf, postImages[2]],
+     comments: [{ userIdx: 0, content: "What's your watering routine? Mine keeps dropping leaves 😭" }, { userIdx: 1, content: 'Consistency is key with fiddle leaf figs, great tip!' }] },
+   { type: 'update', content: 'Orchid bloom season is here! These flowers last for months with proper care #OrchidLove #Blooming', plantIdx: 1, images: [plantImages.orchid],
+     comments: [{ userIdx: 6, content: 'Orchids blooming for months is such a flex 🌸' }, { userIdx: 4, content: 'What kind of fertilizer do you use?' }] }],
 
-  [{ type: 'swap', content: 'Anyone want to trade fern cuttings? I have Boston ferns and looking for some bird nest ferns! #FernFriday #PlantSwap', plantIdx: 0, images: [plantImages.fern] },
-   { type: 'update', content: 'Desert vibes in my apartment 🏜️ This cactus collection is growing! #Cactus #DesertPlants #UrbanJungle', plantIdx: 1, images: [plantImages.cactus, postImages[3]] }],
+  [{ type: 'swap', content: 'Anyone want to trade fern cuttings? I have Boston ferns and looking for some bird nest ferns! #FernFriday #PlantSwap', plantIdx: 0, images: [plantImages.fern],
+     comments: [{ userIdx: 2, content: 'I have a bird nest fern! DM me 🌿' }, { userIdx: 0, content: 'Fern Friday is my favorite hashtag 🌿' }] },
+   { type: 'update', content: 'Desert vibes in my apartment 🏜️ This cactus collection is growing! #Cactus #DesertPlants #UrbanJungle', plantIdx: 1, images: [plantImages.cactus, postImages[3]],
+     comments: [{ userIdx: 1, content: 'Desert vibes are everything! Love the collection' }, { userIdx: 5, content: 'How do you prevent overwatering with cacti?' }, { userIdx: 6, content: 'Goals! I need to start a cactus collection' }] }],
 
-  [{ type: 'update', content: 'Peace lilies are not just beautiful, they also purify the air! One of my favorite houseplants 💚 #PeaceLily #AirPurifying', plantIdx: 0, images: [plantImages.peace_lily, postImages[4]] },
-   { type: 'giveaway', content: 'Giving away this philodendron - it has grown too big for my space! Pick up in Haifa only 🌱 #PlantGiveaway #Philodendron', plantIdx: 1, images: [plantImages.philodendron] }],
+  [{ type: 'update', content: 'Peace lilies are not just beautiful, they also purify the air! One of my favorite houseplants 💚 #PeaceLily #AirPurifying', plantIdx: 0, images: [plantImages.peace_lily, postImages[4]],
+     comments: [{ userIdx: 6, content: 'Peace lilies are so underrated as air purifiers!' }, { userIdx: 3, content: 'Mine droops dramatically when thirsty - built-in watering reminder 😄' }] },
+   { type: 'giveaway', content: 'Giving away this philodendron - it has grown too big for my space! Pick up in Haifa only 🌱 #PlantGiveaway #Philodendron', plantIdx: 1, images: [plantImages.philodendron],
+     comments: [{ userIdx: 2, content: "I'm in Haifa! Can I come pick it up this week?" }, { userIdx: 1, content: 'Philodendrons grow so fast, totally understand when they outgrow the space' }] }],
 
-  [{ type: 'update', content: 'Variegated Monstera update! The white sections are getting bigger with each new leaf 🤍 #VariegatedMonstera #RarePlants', plantIdx: 0, images: [plantImages.monstera, postImages[5]] },
-   { type: 'swap', content: 'Looking for plant swaps in Jerusalem! I have string of pearls cuttings available 📿 #PlantSwap #StringOfPearls', plantIdx: 1, images: [plantImages.succulent] }],
+  [{ type: 'update', content: 'Variegated Monstera update! The white sections are getting bigger with each new leaf 🤍 #VariegatedMonstera #RarePlants', plantIdx: 0, images: [plantImages.monstera, postImages[5]],
+     comments: [{ userIdx: 0, content: "That white variegation is stunning, I'm so jealous 🤍" }, { userIdx: 6, content: 'How do you keep the variegation so bright?' }, { userIdx: 3, content: 'Rare plant goals right here!' }] },
+   { type: 'swap', content: 'Looking for plant swaps in Jerusalem! I have string of pearls cuttings available 📿 #PlantSwap #StringOfPearls', plantIdx: 1, images: [plantImages.succulent],
+     comments: [{ userIdx: 4, content: 'Jerusalem plant swap sounds amazing! I will DM you' }, { userIdx: 3, content: 'String of pearls are so satisfying to propagate' }] }],
 
-  [{ type: 'update', content: 'Maidenhair ferns are tricky but SO worth it! The delicate leaves are just stunning 🌿 #MaidenhairFern #PlantChallenge', plantIdx: 0, images: [plantImages.fern] },
-   { type: 'swap', content: 'Neon pothos cuttings available for swap! These glow-in-the-dark beauties need more homes 💚 #NeonPothos #PlantSwap', plantIdx: 1, images: [plantImages.pothos] }],
+  [{ type: 'update', content: 'Maidenhair ferns are tricky but SO worth it! The delicate leaves are just stunning 🌿 #MaidenhairFern #PlantChallenge', plantIdx: 0, images: [plantImages.fern],
+     comments: [{ userIdx: 2, content: 'Maidenhair ferns are notoriously picky, congrats on keeping it alive!' }, { userIdx: 5, content: "What's your humidity secret? Mine always dries out" }] },
+   { type: 'swap', content: 'Neon pothos cuttings available for swap! These glow-in-the-dark beauties need more homes 💚 #NeonPothos #PlantSwap', plantIdx: 1, images: [plantImages.pothos],
+     comments: [{ userIdx: 0, content: 'Neon pothos are so vibrant! Would love to swap' }, { userIdx: 1, content: 'These really do look like they glow, amazing color!' }] }],
 ];
 
 // Create posts
 print('\nCreating posts...');
 let postCount = 0;
 const postIds = [];
+const postComments = []; // track { postId, comments[] } for later insertion
 userIds.forEach((userId, i) => {
   postsPerUser[i].forEach(post => {
     const createdAt = new Date(now.getTime() - Math.random() * 14 * 24 * 60 * 60 * 1000);
@@ -189,15 +212,35 @@ userIds.forEach((userId, i) => {
       type: post.type,
       content: post.content,
       images: post.images,
-      commentsCount: Math.floor(Math.random() * 10),
+      commentsCount: post.comments.length,
       createdAt: createdAt,
       updatedAt: createdAt,
     });
     postIds.push(result.insertedId);
+    postComments.push({ postId: result.insertedId, postCreatedAt: createdAt, comments: post.comments });
     postCount++;
   });
   print(`  ✓ Created ${postsPerUser[i].length} posts for ${testUsers[i].username}`);
 });
+
+// Add real comments
+print('\nAdding comments to posts...');
+let totalComments = 0;
+postComments.forEach(({ postId, postCreatedAt, comments }) => {
+  comments.forEach((c, idx) => {
+    const commentedAt = new Date(postCreatedAt.getTime() + (idx + 1) * 60 * 60 * 1000);
+    db.comments.insertOne({
+      postId: postId,
+      userId: userIds[c.userIdx],
+      content: c.content,
+      createdAt: commentedAt,
+      updatedAt: commentedAt,
+    });
+    totalComments++;
+  });
+});
+print(`  ✓ Added ${totalComments} comments across ${postCount} posts`);
+
 
 // Add likes
 print('\nAdding likes to posts...');
@@ -223,6 +266,7 @@ print('\n✅ Seed completed successfully!');
 print(`   - ${testUsers.length} users created`);
 print(`   - ${plantsPerUser.flat().length} plants created`);
 print(`   - ${postCount} posts created`);
+print(`   - ${totalComments} comments created`);
 print('\n📧 Test login credentials:');
 print('   Email: emma.green@example.com');
 print('   Password: Password123!');
