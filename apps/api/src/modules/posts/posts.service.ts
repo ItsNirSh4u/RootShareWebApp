@@ -35,6 +35,7 @@ export class PostsService {
     return this.postModel
       .find()
       .sort({ createdAt: -1 })
+      .populate('userId', 'username profileImageUrl')
       .populate('likesCount')
       .populate('plantId')
       .exec();
@@ -43,6 +44,7 @@ export class PostsService {
   async findOne(id: string): Promise<PostDocument> {
     const post = await this.postModel
       .findById(id)
+      .populate('userId', 'username profileImageUrl')
       .populate('likesCount')
       .populate('plantId')
       .exec();
