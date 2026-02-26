@@ -54,7 +54,6 @@ describe('Chat (e2e)', () => {
       getModelToken('Message'),
     );
 
-    // Register two users
     const user1Data = { email: 'user1@test.com', username: 'user1', password: 'Password123!' };
     const user2Data = { email: 'user2@test.com', username: 'user2', password: 'Password123!' };
 
@@ -66,7 +65,6 @@ describe('Chat (e2e)', () => {
     user2 = res2.body.user;
     token2 = res2.body.tokens.accessToken;
 
-    // Create a chat between them
     const chatRes = await request(app.getHttpServer())
       .post('/api/chats')
       .set('Authorization', `Bearer ${token1}`)
@@ -106,7 +104,6 @@ describe('Chat (e2e)', () => {
         expect(message.content).toBe(messageContent);
         expect(message.senderId).toBe(user1._id);
 
-        // Verify message is in the database
         const dbMessage = await messageModel.findById(message._id);
         expect(dbMessage).not.toBeNull();
         expect(dbMessage!.content).toBe(messageContent);
@@ -117,12 +114,10 @@ describe('Chat (e2e)', () => {
       }
     });
 
-    // User1 connects and joins the room, then waits for user2 to join
     clientSocket1.on('connect', () => {
       clientSocket1.emit('join_room', { roomId: chatId });
     });
 
-    // When user2 joins the room, user1 receives 'user_joined' — safe to send now
     clientSocket1.on('user_joined', () => {
       clientSocket1.emit('send_message', {
         chatId: chatId,

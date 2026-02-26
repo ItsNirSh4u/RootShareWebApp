@@ -27,7 +27,6 @@ export class ChatService {
     const chat = await this.chatModel.findById(chatId);
 
     if (chat) {
-      // Update unread count for all participants except the sender
       for (const participant of chat.participants) {
         const pid = participant.toString();
         if (pid !== senderId) {
@@ -42,8 +41,6 @@ export class ChatService {
 
     return savedMessage.populate('senderId', 'username profileImageUrl');
   }
-
-  // --- Direct chat methods ---
 
   async createChat(userId1: string, userId2: string): Promise<Chat> {
     const newChat = new this.chatModel({
@@ -67,8 +64,6 @@ export class ChatService {
         populate: { path: 'senderId', select: 'username profileImageUrl' },
       });
   }
-
-  // --- Shared methods (direct + group) ---
 
   async getChatsForUser(userId: string): Promise<Chat[]> {
     return this.chatModel
@@ -105,8 +100,6 @@ export class ChatService {
     }
   }
 
-  // --- Group chat methods ---
-
   async createGroupChat(
     creatorId: string,
     name: string,
@@ -134,7 +127,6 @@ export class ChatService {
       { new: true },
     );
 
-    // Initialize unread counts for new members
     for (const userId of userIds) {
       if (!chat!.unreadCount.has(userId)) {
         chat!.unreadCount.set(userId, 0);
@@ -182,8 +174,6 @@ export class ChatService {
     await this.messageModel.deleteMany({ chatId });
     await this.chatModel.findByIdAndDelete(chatId);
   }
-
-  // --- Private helpers ---
 
   private async _removeParticipant(
     chat: ChatDocument,

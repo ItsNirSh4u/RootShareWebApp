@@ -6,7 +6,6 @@ import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { AuthProvider, UserRole, IUser } from '@rootshare/shared-types';
 
-// Mock bcrypt before importing
 jest.mock('bcrypt', () => ({
   hash: jest.fn(),
   compare: jest.fn(),
@@ -31,7 +30,6 @@ jest.mock('http', () => ({
   get: jest.fn(),
 }));
 
-// Import bcrypt after mocking
 import * as bcrypt from 'bcrypt';
 
 describe('AuthService', () => {
@@ -105,7 +103,6 @@ describe('AuthService', () => {
     jwtService = module.get(JwtService);
     configService = module.get(ConfigService);
 
-    // Setup default config values
     configService.get.mockImplementation((key: string) => {
       const config: Record<string, string> = {
         JWT_ACCESS_SECRET: 'access-secret',
@@ -118,12 +115,10 @@ describe('AuthService', () => {
       return config[key];
     });
 
-    // Setup JWT signing
     jwtService.signAsync
       .mockResolvedValueOnce(mockTokens.accessToken)
       .mockResolvedValueOnce(mockTokens.refreshToken);
 
-    // Setup bcrypt hash for refresh token storage
     (bcrypt.hash as jest.Mock).mockResolvedValue('hashedValue');
   });
 
@@ -262,7 +257,7 @@ describe('AuthService', () => {
       email: 'google@example.com',
       firstName: 'John',
       lastName: 'Doe',
-      picture: undefined, // No picture to avoid file system mocking complexity
+      picture: undefined,
     };
 
     it('should return tokens for existing Google user', async () => {

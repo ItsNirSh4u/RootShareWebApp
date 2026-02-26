@@ -52,7 +52,7 @@ export class PostsController {
   create(
     @Request() req: { user: { id: string } },
     @Body() createPostDto: CreatePostDto,
-  ) {
+  ): Promise<PostDocument> {
     return this.postsService.create(req.user.id, createPostDto);
   }
 
@@ -64,7 +64,7 @@ export class PostsController {
     type: [PostSchema],
   })
   @ApiUnauthorizedResponse()
-  findAll() {
+  findAll(): Promise<PostDocument[]> {
     return this.postsService.findAll();
   }
 
@@ -77,7 +77,7 @@ export class PostsController {
     type: PostSchema,
   })
   @ApiProtectedReadResponses('Post')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: string): Promise<PostDocument> {
     return this.postsService.findOne(id);
   }
 
@@ -95,7 +95,7 @@ export class PostsController {
   update(
     @Request() req: { user: { id: string }; post: PostDocument },
     @Body() updatePostDto: UpdatePostDto,
-  ) {
+  ): Promise<PostDocument> {
     return this.postsService.update(req.post, updatePostDto);
   }
 
@@ -108,7 +108,7 @@ export class PostsController {
     description: 'The post has been successfully deleted.',
   })
   @ApiOwnershipResponses('Post')
-  remove(@Request() req: { post: PostDocument }) {
+  remove(@Request() req: { post: PostDocument }): Promise<{ deleted: boolean; id: string }> {
     return this.postsService.remove(req.post);
   }
 }

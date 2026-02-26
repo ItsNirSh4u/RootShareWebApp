@@ -28,9 +28,6 @@ export class AuthService {
       throw new ConflictException('User with this email already exists');
     }
 
-    // TODO: Add a check for existing username to prevent 500 error on duplicate usernames.
-    // The partner should implement `this.usersService.findByUsername` and throw a 409 ConflictException if the username is taken.
-
     const hashedPassword = await bcrypt.hash(registrationData.password, 10);
     const user = await this.usersService.create({
       ...registrationData,
@@ -39,7 +36,6 @@ export class AuthService {
 
     const tokens = await this.generateTokens(user.id, user.email);
 
-    // Store hashed refresh token in database
     await this.storeRefreshToken(user.id, tokens.refreshToken);
 
     this.logger.log({ userId: user.id, authProvider: 'local', event: 'user_registered' }, 'New user registered');
@@ -65,7 +61,6 @@ export class AuthService {
 
     const tokens = await this.generateTokens(user._id.toString(), user.email);
 
-    // Store hashed refresh token in database
     await this.storeRefreshToken(user._id.toString(), tokens.refreshToken);
 
     this.logger.log({ userId: user._id.toString(), event: 'login_success', authProvider: 'local' }, 'User logged in');
@@ -77,45 +72,37 @@ export class AuthService {
   }
 
   async refreshTokens(userId: string, refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
-    // Get user with refresh token from database
     const user = await this.usersService.findByIdWithRefreshToken(userId);
     if (!user || !user.refreshToken) {
       throw new UnauthorizedException('Access denied');
     }
 
-    // Validate the refresh token against stored hash
     const isRefreshTokenValid = await bcrypt.compare(refreshToken, user.refreshToken);
     if (!isRefreshTokenValid) {
       this.logger.warn({ userId, event: 'token_refresh_failed' }, 'Token refresh failed - invalid refresh token');
       throw new UnauthorizedException('Access denied');
     }
 
-    // Generate new tokens
     const tokens = await this.generateTokens(user._id.toString(), user.email);
 
-    // Store new hashed refresh token
     await this.storeRefreshToken(user._id.toString(), tokens.refreshToken);
 
     return tokens;
   }
 
   async logout(userId: string): Promise<void> {
-    // Delete refresh token from database
     await this.usersService.updateRefreshToken(userId, null);
     this.logger.log({ userId, event: 'logout' }, 'User logged out');
   }
 
   async validateGoogleUser(googleProfile: GoogleProfile): Promise<IAuthResponse> {
     const { googleId, email, firstName, lastName, picture } = googleProfile;
-    
-    // Check if user already exists with this Google ID
-    let user = await this.usersService.findByGoogleId(googleId);
+
+    const user = await this.usersService.findByGoogleId(googleId);
 
     if (user) {
-      // User exists, generate tokens
       const tokens = await this.generateTokens(user._id.toString(), user.email);
 
-      // Store hashed refresh token
       await this.storeRefreshToken(user._id.toString(), tokens.refreshToken);
 
       this.logger.log({ userId: user._id.toString(), event: 'login_success', authProvider: 'google' }, 'Google user logged in');
@@ -126,7 +113,6 @@ export class AuthService {
       };
     }
 
-    // Check if user exists with this email (registered via local auth)
     const existingUserByEmail = await this.usersService.findByEmail(email);
 
     if (existingUserByEmail) {
@@ -136,7 +122,6 @@ export class AuthService {
       );
     }
 
-    // Download Google profile image locally as fallback
     let localProfileImageUrl: string | undefined;
     if (picture) {
       try {
@@ -146,7 +131,6 @@ export class AuthService {
       }
     }
 
-    // Create new user with Google OAuth
     const username = this.generateUniqueUsername(firstName, lastName);
     const newUser = await this.usersService.create({
       email,
@@ -159,7 +143,6 @@ export class AuthService {
 
     const tokens = await this.generateTokens(newUser.id, newUser.email);
 
-    // Store hashed refresh token
     await this.storeRefreshToken(newUser.id, tokens.refreshToken);
 
     this.logger.log({ userId: newUser.id, authProvider: 'google', event: 'user_registered' }, 'New Google user registered');
@@ -171,13 +154,9 @@ export class AuthService {
   }
 
   async validateGoogleIdToken(idToken: string): Promise<IAuthResponse> {
-    // Verify the ID token with Google
-    // For production, use google-auth-library's OAuth2Client.verifyIdToken()
-    // This is a simplified implementation that decodes and validates the token
     const googleClientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
     const googleMobileClientId = this.configService.get<string>('GOOGLE_MOBILE_CLIENT_ID');
 
-    // Accept tokens from both web and mobile client IDs
     const validAudiences = [googleClientId, googleMobileClientId].filter(Boolean) as string[];
 
     try {
@@ -217,7 +196,6 @@ export class AuthService {
     const uploadPath = this.configService.get<string>('UPLOAD_PATH') || './uploads';
     const profileImagesDir = path.join(uploadPath, 'profile-images');
 
-    // Ensure directory exists
     if (!fs.existsSync(profileImagesDir)) {
       fs.mkdirSync(profileImagesDir, { recursive: true });
     }
@@ -231,7 +209,6 @@ export class AuthService {
       const file = fs.createWriteStream(filePath);
 
       protocol.get(imageUrl, (response) => {
-        // Handle redirects
         if (response.statusCode === 301 || response.statusCode === 302) {
           const redirectUrl = response.headers.location;
           if (redirectUrl) {
@@ -248,11 +225,10 @@ export class AuthService {
 
         file.on('finish', () => {
           file.close();
-          // Return relative URL path for serving
           resolve(`/uploads/profile-images/${fileName}`);
         });
       }).on('error', (err) => {
-        fs.unlink(filePath, () => {}); // Delete partial file
+        fs.unlink(filePath, () => {});
         reject(err);
       });
     });

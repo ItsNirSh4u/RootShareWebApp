@@ -87,7 +87,7 @@ describe('PlantOwnerGuard', () => {
 
       const context = {
         switchToHttp: () => ({
-          getRequest: () => mockRequest,
+          getRequest: (): typeof mockRequest => mockRequest,
         }),
       } as ExecutionContext;
 

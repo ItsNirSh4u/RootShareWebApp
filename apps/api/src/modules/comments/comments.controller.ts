@@ -45,7 +45,7 @@ export class CommentsController {
   create(
     @Request() req: { user: { id: string } },
     @Body() createCommentDto: CreateCommentDto
-  ) {
+  ): Promise<CommentDocument> {
     return this.commentsService.create(req.user.id, createCommentDto);
   }
 
@@ -58,7 +58,7 @@ export class CommentsController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   @ApiResponse({ status: 404, description: 'Post not found.' })
-  findAllForPost(@Param('postId') postId: string) {
+  findAllForPost(@Param('postId') postId: string): Promise<CommentDocument[]> {
     return this.commentsService.findAllForPost(postId);
   }
 
@@ -76,7 +76,7 @@ export class CommentsController {
   update(
     @Request() req: { user: { id: string }; comment: CommentDocument },
     @Body() updateCommentDto: UpdateCommentDto
-  ) {
+  ): Promise<CommentDocument> {
     return this.commentsService.update(req.comment, updateCommentDto);
   }
 
@@ -91,7 +91,7 @@ export class CommentsController {
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   @ApiResponse({ status: 404, description: 'Comment not found.' })
-  remove(@Request() req: { comment: CommentDocument }) {
+  remove(@Request() req: { comment: CommentDocument }): Promise<{ deleted: boolean; id: string }> {
     return this.commentsService.remove(req.comment);
   }
 }

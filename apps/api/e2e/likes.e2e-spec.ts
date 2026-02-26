@@ -19,7 +19,6 @@ describe('Likes (e2e)', () => {
     const loginResponse = await tester.login();
     jwtToken = loginResponse.accessToken;
 
-    // Create a post
     const createPostDto: CreatePostDto = {
       type: PostType.UPDATE,
       content: 'Test post for likes',
@@ -33,7 +32,6 @@ describe('Likes (e2e)', () => {
 
     postId = postResponse.body._id;
 
-    // Create a comment
     const createCommentDto: CreateCommentDto = {
       postId,
       content: 'Test comment for likes',
@@ -54,14 +52,12 @@ describe('Likes (e2e)', () => {
 
   describe('/api/likes', () => {
     it('should be able to like and unlike a post', async () => {
-      // Like the post
       let response = await request(app.getHttpServer())
         .post(`/api/likes/posts/${postId}/toggle`)
         .set('Authorization', `Bearer ${jwtToken}`)
         .expect(200);
       expect(response.body.liked).toBe(true);
 
-      // Unlike the post
       response = await request(app.getHttpServer())
         .post(`/api/likes/posts/${postId}/toggle`)
         .set('Authorization', `Bearer ${jwtToken}`)
@@ -70,14 +66,12 @@ describe('Likes (e2e)', () => {
     });
 
     it('should be able to like and unlike a comment', async () => {
-      // Like the comment
       let response = await request(app.getHttpServer())
         .post(`/api/likes/comments/${commentId}/toggle`)
         .set('Authorization', `Bearer ${jwtToken}`)
         .expect(200);
       expect(response.body.liked).toBe(true);
 
-      // Unlike the comment
       response = await request(app.getHttpServer())
         .post(`/api/likes/comments/${commentId}/toggle`)
         .set('Authorization', `Bearer ${jwtToken}`)
@@ -86,7 +80,6 @@ describe('Likes (e2e)', () => {
     });
 
     it('should get the number of likes for a post', async () => {
-      // Like the post
       await request(app.getHttpServer())
         .post(`/api/likes/posts/${postId}/toggle`)
         .set('Authorization', `Bearer ${jwtToken}`)
@@ -100,7 +93,6 @@ describe('Likes (e2e)', () => {
     });
 
     it('should get the number of likes for a comment', async () => {
-      // Like the comment
       await request(app.getHttpServer())
         .post(`/api/likes/comments/${commentId}/toggle`)
         .set('Authorization', `Bearer ${jwtToken}`)

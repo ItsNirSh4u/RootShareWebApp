@@ -13,13 +13,11 @@ import { ChatModule } from './modules/chat/chat.module';
 
 @Module({
   imports: [
-    // Environment configuration
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
     }),
 
-    // Structured logging with Pino
     LoggerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
@@ -39,7 +37,6 @@ import { ChatModule } from './modules/chat/chat.module';
           });
         }
 
-        // Always log to stdout (pretty in dev, JSON in prod)
         targets.push({
           target: isProduction ? 'pino/file' : 'pino-pretty',
           options: isProduction ? {} : { colorize: true },
@@ -50,14 +47,13 @@ import { ChatModule } from './modules/chat/chat.module';
             level: isProduction ? 'info' : 'debug',
             transport: { targets },
             autoLogging: {
-              ignore: (req: any) => req.url === '/api/health',
+              ignore: (req: any): boolean => req.url === '/api/health',
             },
           },
         };
       },
     }),
 
-    // MongoDB connection
     MongooseModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
@@ -65,7 +61,6 @@ import { ChatModule } from './modules/chat/chat.module';
       }),
     }),
 
-    // Feature modules
     AuthModule,
     UsersModule,
     PlantsModule,

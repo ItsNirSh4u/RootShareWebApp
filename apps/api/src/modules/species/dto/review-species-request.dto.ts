@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum, ValidateIf } from 'class-validator';
+import { IsString, IsEnum, ValidateIf } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { SpeciesRequestStatus } from '@rootshare/shared-types';
 

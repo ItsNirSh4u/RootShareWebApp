@@ -61,8 +61,6 @@ describe('SpeciesController', () => {
     jest.clearAllMocks();
   });
 
-  // ========== Public Endpoints ==========
-
   describe('findAllSpecies', () => {
     it('should return all species', async () => {
       const mockSpeciesList = [mockSpecies];
@@ -87,8 +85,6 @@ describe('SpeciesController', () => {
       expect(result).toEqual(mockSpecies);
     });
   });
-
-  // ========== User Endpoints ==========
 
   describe('createSpeciesRequest', () => {
     const createRequestDto = {
@@ -131,8 +127,6 @@ describe('SpeciesController', () => {
       expect(result).toEqual(mockRequests);
     });
   });
-
-  // ========== Admin Endpoints ==========
 
   describe('createSpecies', () => {
     const createSpeciesDto = {
