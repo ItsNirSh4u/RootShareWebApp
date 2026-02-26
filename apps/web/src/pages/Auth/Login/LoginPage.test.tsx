@@ -1,19 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { render, createMockAuthResponse } from '../test/test-utils';
-import { LoginPage } from './Auth/LoginPage';
-import * as authLib from '../lib/auth';
-import { useAuthStore } from '../stores/auth.store';
+import { render, createMockAuthResponse } from '@/test/test-utils';
+import { LoginPage } from './LoginPage';
+import * as authLib from '@/pages/Auth/auth';
+import { useAuthStore } from '@/stores/auth.store';
 
-// Mock the auth library
-vi.mock('../lib/auth', () => ({
-  loginUser: vi.fn(),
-  initiateGoogleAuth: vi.fn(),
-  getAuthErrorMessage: vi.fn((_error) => 'An error occurred'),
-}));
+vi.mock('@/pages/Auth/auth', async () => {
+  const actual = await vi.importActual('@/pages/Auth/auth');
+  return {
+    ...actual,
+    loginUser: vi.fn(),
+    initiateGoogleAuth: vi.fn(),
+    getAuthErrorMessage: vi.fn((_error) => 'An error occurred'),
+  };
+});
 
-// Mock react-router-dom's useNavigate
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
@@ -71,7 +73,6 @@ describe('LoginPage', () => {
       await user.type(screen.getByLabelText(/password/i), 'password123');
       await user.click(screen.getByRole('button', { name: /sign in/i }));
 
-      // Login should not be called because email validation should fail
       expect(authLib.loginUser).not.toHaveBeenCalled();
     });
 
@@ -96,7 +97,7 @@ describe('LoginPage', () => {
       await user.click(screen.getByRole('button', { name: /sign in/i }));
 
       await waitFor(() => {
-        expect(screen.getByText('Password must be at least 6 characters')).toBeInTheDocument();
+        expect(screen.getByText('Password must be at least 8 characters')).toBeInTheDocument();
       });
     });
 

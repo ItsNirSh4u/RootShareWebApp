@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthLayout } from '../../../components/layouts/AuthLayout';
 import { Button, Input, Divider, ErrorAlert } from '../../../components/ui';
@@ -51,7 +50,7 @@ export function RegisterPage(): JSX.Element {
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+  const handleSubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
     setError(null);
 
@@ -68,10 +67,8 @@ export function RegisterPage(): JSX.Element {
         password,
       });
 
-      // Store tokens in localStorage via auth store
       setAuth(response.user, response.tokens);
 
-      // Redirect to feed after successful registration
       navigate('/feed', { replace: true });
     } catch (err) {
       setError(getAuthErrorMessage(err));

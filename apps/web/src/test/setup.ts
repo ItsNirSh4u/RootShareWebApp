@@ -2,12 +2,10 @@ import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
 
-// Cleanup after each test
 afterEach(() => {
   cleanup();
 });
 
-// Mock window.location
 const mockLocation = {
   href: '',
   pathname: '/',
@@ -24,7 +22,6 @@ Object.defineProperty(window, 'location', {
   writable: true,
 });
 
-// Mock localStorage
 const localStorageMock = {
   getItem: vi.fn(),
   setItem: vi.fn(),
@@ -36,7 +33,6 @@ Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
 });
 
-// Reset mocks between tests
 afterEach(() => {
   vi.clearAllMocks();
   mockLocation.href = '';

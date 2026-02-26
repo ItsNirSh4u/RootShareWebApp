@@ -1,4 +1,3 @@
 export const MINIMUM_PASSWORD_LENGTH = 8;
-export const MAXIMUM_PASSWORD_LENGTH = 30;
 export const MINIMUM_USERNAME_LENGTH = 3;
 export const MAXIMUM_USERNAME_LENGTH = 30;
