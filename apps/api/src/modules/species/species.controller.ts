@@ -32,13 +32,13 @@ import {
   ApiForbiddenResponse,
   ApiNotFoundResponse,
 } from '../../common/decorators';
+import { SpeciesDocument } from './schemas/species.schema';
+import { SpeciesRequestDocument } from './schemas/species-request.schema';
 
 @ApiTags('species')
 @Controller('species')
 export class SpeciesController {
   constructor(private readonly speciesService: SpeciesService) {}
-
-  // ========== Public/User Endpoints ==========
 
   @Get()
   @ApiOperation({ summary: 'Get all approved species (public)' })
@@ -47,7 +47,7 @@ export class SpeciesController {
     description: 'List of all approved species',
     type: [Species],
   })
-  findAllSpecies() {
+  findAllSpecies(): Promise<SpeciesDocument[]> {
     return this.speciesService.findAllSpecies();
   }
 
@@ -60,11 +60,9 @@ export class SpeciesController {
     type: Species,
   })
   @ApiNotFoundResponse('Species')
-  findOneSpecies(@Param('id') id: string) {
+  findOneSpecies(@Param('id') id: string): Promise<SpeciesDocument> {
     return this.speciesService.findSpeciesById(id);
   }
-
-  // ========== Species Request Endpoints (Users) ==========
 
   @Post('requests')
   @UseGuards(JwtAuthGuard)
@@ -79,7 +77,7 @@ export class SpeciesController {
   createSpeciesRequest(
     @Request() req: { user: { id: string } },
     @Body() createRequestDto: CreateSpeciesRequestDto,
-  ) {
+  ): Promise<SpeciesRequestDocument> {
     return this.speciesService.createSpeciesRequest(
       req.user.id,
       createRequestDto,
@@ -96,11 +94,9 @@ export class SpeciesController {
     type: [SpeciesRequest],
   })
   @ApiUnauthorizedResponse()
-  findMySpeciesRequests(@Request() req: { user: { id: string } }) {
+  findMySpeciesRequests(@Request() req: { user: { id: string } }): Promise<SpeciesRequestDocument[]> {
     return this.speciesService.findUserSpeciesRequests(req.user.id);
   }
-
-  // ========== Admin Endpoints ==========
 
   @Post('admin')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -114,7 +110,7 @@ export class SpeciesController {
   })
   @ApiUnauthorizedResponse()
   @ApiForbiddenResponse()
-  createSpecies(@Body() createSpeciesDto: CreateSpeciesDto) {
+  createSpecies(@Body() createSpeciesDto: CreateSpeciesDto): Promise<SpeciesDocument> {
     return this.speciesService.createSpecies(createSpeciesDto);
   }
 
@@ -131,7 +127,7 @@ export class SpeciesController {
   @ApiUnauthorizedResponse()
   @ApiForbiddenResponse()
   @ApiNotFoundResponse('Species')
-  deleteSpecies(@Param('id') id: string) {
+  deleteSpecies(@Param('id') id: string): Promise<{ deleted: boolean; id: string }> {
     return this.speciesService.deleteSpecies(id);
   }
 
@@ -153,7 +149,7 @@ export class SpeciesController {
   })
   @ApiUnauthorizedResponse()
   @ApiForbiddenResponse()
-  findAllSpeciesRequests(@Query('status') status?: SpeciesRequestStatus) {
+  findAllSpeciesRequests(@Query('status') status?: SpeciesRequestStatus): Promise<SpeciesRequestDocument[]> {
     return this.speciesService.findAllSpeciesRequests(status);
   }
 
@@ -171,7 +167,7 @@ export class SpeciesController {
   @ApiUnauthorizedResponse()
   @ApiForbiddenResponse()
   @ApiNotFoundResponse('Species request')
-  findOneSpeciesRequest(@Param('id') id: string) {
+  findOneSpeciesRequest(@Param('id') id: string): Promise<SpeciesRequestDocument> {
     return this.speciesService.findSpeciesRequestById(id);
   }
 
@@ -193,7 +189,7 @@ export class SpeciesController {
     @Param('id') id: string,
     @Request() req: { user: { id: string } },
     @Body() reviewDto: ReviewSpeciesRequestDto,
-  ) {
+  ): Promise<SpeciesRequestDocument> {
     return this.speciesService.reviewSpeciesRequest(id, req.user.id, reviewDto);
   }
 }

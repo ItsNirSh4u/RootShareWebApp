@@ -52,7 +52,7 @@ export class PlantsController {
   create(
     @Request() req: { user: { id: string } },
     @Body() createPlantDto: CreatePlantDto,
-  ) {
+  ): Promise<PlantDocument> {
     return this.plantsService.create(req.user.id, createPlantDto);
   }
 
@@ -73,7 +73,7 @@ export class PlantsController {
   findAll(
     @Request() req: { user: { id: string } },
     @Query('status') status?: PlantStatus,
-  ) {
+  ): Promise<PlantDocument[]> {
     return this.plantsService.findAll(req.user.id, status ? { status } : undefined);
   }
 
@@ -91,7 +91,7 @@ export class PlantsController {
     type: [Plant],
   })
   @ApiUnauthorizedResponse()
-  findFeatured(@Query('limit') limit?: number) {
+  findFeatured(@Query('limit') limit?: number): Promise<PlantDocument[]> {
     return this.plantsService.findFeatured(limit || 10);
   }
 
@@ -105,7 +105,7 @@ export class PlantsController {
     type: Plant,
   })
   @ApiProtectedReadResponses('Plant')
-  findOne(@Request() req: { plant: PlantDocument }) {
+  findOne(@Request() req: { plant: PlantDocument }): PlantDocument {
     return req.plant;
   }
 
@@ -126,7 +126,7 @@ export class PlantsController {
   update(
     @Request() req: { user: { id: string }; plant: PlantDocument },
     @Body() updatePlantDto: UpdatePlantDto,
-  ) {
+  ): Promise<PlantDocument> {
     return this.plantsService.update(req.plant, updatePlantDto);
   }
 
@@ -139,7 +139,7 @@ export class PlantsController {
     description: 'The plant has been successfully deleted.',
   })
   @ApiOwnershipResponses('Plant')
-  remove(@Request() req: { plant: PlantDocument }) {
+  remove(@Request() req: { plant: PlantDocument }): Promise<{ deleted: boolean; id: string }> {
     return this.plantsService.remove(req.plant);
   }
 }

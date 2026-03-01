@@ -35,11 +35,6 @@ export class UsersService {
     return this.userModel.findOne({ email }).select('+password').exec();
   }
 
-  async findByUsername(username: string): Promise<IUser | null> {
-    const user = await this.userModel.findOne({ username }).exec();
-    return user ? this.sanitizeUser(user) : null;
-  }
-
   async update(id: string, updateData: IUserUpdate): Promise<IUser> {
     const user = await this.userModel
       .findByIdAndUpdate(id, updateData, { new: true })
@@ -62,12 +57,6 @@ export class UsersService {
     return this.userModel.findById(id).select('+refreshToken').exec();
   }
 
-  async updateProfileImage(id: string, profileImageUrl: string): Promise<void> {
-    await this.userModel
-      .findByIdAndUpdate(id, { profileImageUrl })
-      .exec();
-  }
-
   async searchUsers(query: string, excludeUserId: string): Promise<IUser[]> {
     const users = await this.userModel
       .find({
@@ -83,7 +72,7 @@ export class UsersService {
 
   sanitizeUser(user: UserDocument): IUser {
     const userObject = user.toObject();
-    const { password, ...sanitized } = userObject;
+    const { password: _password, ...sanitized } = userObject;
     return {
       ...sanitized,
       id: user._id.toString(),

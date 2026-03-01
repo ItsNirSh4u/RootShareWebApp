@@ -27,7 +27,6 @@ export class SpeciesService {
     private speciesRequestModel: Model<SpeciesRequestDocument>,
   ) {}
 
-
   async createSpecies(createSpeciesDto: CreateSpeciesDto): Promise<SpeciesDocument> {
     const existingSpecies = await this.speciesModel
       .findOne({ name: { $regex: new RegExp(`^${createSpeciesDto.name}$`, 'i') } })
@@ -72,7 +71,6 @@ export class SpeciesService {
     return { deleted: true, id };
   }
 
-
   async createSpeciesRequest(
     userId: string,
     createRequestDto: CreateSpeciesRequestDto,
@@ -84,7 +82,6 @@ export class SpeciesService {
       );
     }
 
-    // Check if there's already a pending request for this species
     const existingRequest = await this.speciesRequestModel
       .findOne({
         name: { $regex: new RegExp(`^${createRequestDto.name}$`, 'i') },
@@ -148,7 +145,6 @@ export class SpeciesService {
       );
     }
 
-    // Validate rejection reason is provided when rejecting
     if (
       reviewDto.status === SpeciesRequestStatus.REJECTED &&
       !reviewDto.rejectionReason
@@ -158,7 +154,6 @@ export class SpeciesService {
       );
     }
 
-    // Update the request
     request.status = reviewDto.status;
     request.reviewedBy = new Types.ObjectId(adminUserId);
     request.reviewedAt = new Date();
@@ -169,7 +164,6 @@ export class SpeciesService {
 
     await request.save();
 
-    // If approved, create the species
     if (reviewDto.status === SpeciesRequestStatus.APPROVED) {
       await this.createSpecies({
         name: request.name,

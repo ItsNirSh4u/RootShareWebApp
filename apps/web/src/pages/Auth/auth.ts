@@ -1,11 +1,6 @@
 import api from '@/lib/api';
 import { IAuthResponse, IUserLogin, IUserRegistration } from '@rootshare/shared-types';
 
-export interface AuthError {
-  message: string;
-  statusCode?: number;
-}
-
 export async function loginUser(credentials: IUserLogin): Promise<IAuthResponse> {
   const response = await api.post<IAuthResponse>('/auth/login', credentials);
   return response.data;
@@ -17,15 +12,7 @@ export async function registerUser(data: IUserRegistration): Promise<IAuthRespon
 }
 
 export async function initiateGoogleAuth(): Promise<void> {
-  // Redirect to the backend Google OAuth endpoint
   window.location.href = '/api/auth/google';
-}
-
-export async function handleGoogleCallback(code: string): Promise<IAuthResponse> {
-  const response = await api.get<IAuthResponse>('/auth/google/callback', {
-    params: { code },
-  });
-  return response.data;
 }
 
 export function getAuthErrorMessage(error: unknown): string {

@@ -81,10 +81,8 @@ describe('Plants (e2e)', () => {
       getModelToken(Species.name),
     );
 
-    // Create test species
     await speciesModel.create(testSpecies);
 
-    // Register and login user
     const registerResponse = await request(app.getHttpServer())
       .post('/api/auth/register')
       .send(testUser);
@@ -312,7 +310,6 @@ describe('Plants (e2e)', () => {
     let plantId: string;
 
     beforeAll(async () => {
-      // Create plant
       const createResponse = await request(app.getHttpServer())
         .post('/api/plants')
         .set('Authorization', `Bearer ${accessToken}`)
@@ -323,7 +320,6 @@ describe('Plants (e2e)', () => {
         });
       plantId = createResponse.body._id;
 
-      // Register another user
       const otherUserResponse = await request(app.getHttpServer())
         .post('/api/auth/register')
         .send({

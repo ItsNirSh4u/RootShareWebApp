@@ -6,14 +6,16 @@ import { RegisterPage } from '@/pages/Auth/Register/RegisterPage';
 import * as authLib from '@/pages/Auth/auth';
 import { useAuthStore } from '@/stores/auth.store';
 
-// Mock the auth library
-vi.mock('../lib/auth', () => ({
-  registerUser: vi.fn(),
-  initiateGoogleAuth: vi.fn(),
-  getAuthErrorMessage: vi.fn((_error) => 'An error occurred'),
-}));
+vi.mock('@/pages/Auth/auth', async () => {
+  const actual = await vi.importActual('@/pages/Auth/auth');
+  return {
+    ...actual,
+    registerUser: vi.fn(),
+    initiateGoogleAuth: vi.fn(),
+    getAuthErrorMessage: vi.fn((_error) => 'An error occurred'),
+  };
+});
 
-// Mock react-router-dom's useNavigate
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
@@ -112,7 +114,6 @@ describe('RegisterPage', () => {
       await user.type(screen.getByLabelText(/email address/i), 'not-an-email');
       await user.click(screen.getByRole('button', { name: /create account/i }));
 
-      // Register should not be called because email validation should fail
       expect(authLib.registerUser).not.toHaveBeenCalled();
     });
   });
@@ -156,7 +157,7 @@ describe('RegisterPage', () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText('Password must contain uppercase, lowercase, and a number'),
+          screen.getByText('Password must contain at least one uppercase letter'),
         ).toBeInTheDocument();
       });
     });
@@ -173,7 +174,7 @@ describe('RegisterPage', () => {
       await user.click(screen.getByRole('button', { name: /create account/i }));
 
       await waitFor(() => {
-        expect(screen.getByText('Please confirm your password')).toBeInTheDocument();
+        expect(screen.getByText('Passwords do not match')).toBeInTheDocument();
       });
     });
 

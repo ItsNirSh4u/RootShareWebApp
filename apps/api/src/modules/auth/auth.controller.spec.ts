@@ -2,12 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { AuthProvider, UserRole, IUser, IAuthResponse } from '@rootshare/shared-types';
+import { AuthProvider, UserRole, IUser } from '@rootshare/shared-types';
 
 describe('AuthController', () => {
   let controller: AuthController;
   let authService: jest.Mocked<AuthService>;
-  let configService: jest.Mocked<ConfigService>;
 
   const mockUser: IUser = {
     id: 'user-id-123',
@@ -56,7 +55,6 @@ describe('AuthController', () => {
 
     controller = module.get<AuthController>(AuthController);
     authService = module.get(AuthService);
-    configService = module.get(ConfigService);
   });
 
   afterEach(() => {
@@ -101,7 +99,7 @@ describe('AuthController', () => {
       const mockRequest = { user: { sub: 'user-id-123', refreshToken: 'valid-refresh-token' } };
       authService.refreshTokens.mockResolvedValue(mockTokens);
 
-      const result = await controller.refresh(mockRequest);
+      const result = await controller.refresh(mockRequest as any);
 
       expect(authService.refreshTokens).toHaveBeenCalledWith('user-id-123', 'valid-refresh-token');
       expect(result).toEqual(mockTokens);
@@ -112,7 +110,7 @@ describe('AuthController', () => {
     it('should logout user and return success message', async () => {
       const mockRequest = { user: { id: 'user-id-123' } };
 
-      const result = await controller.logout(mockRequest);
+      const result = await controller.logout(mockRequest as any);
 
       expect(authService.logout).toHaveBeenCalledWith('user-id-123');
       expect(result).toEqual({ message: 'Logged out successfully' });
@@ -123,7 +121,7 @@ describe('AuthController', () => {
     it('should return current user from request', async () => {
       const mockRequest = { user: mockUser };
 
-      const result = await controller.getCurrentUser(mockRequest);
+      const result = await controller.getCurrentUser(mockRequest as any);
 
       expect(result).toEqual(mockUser);
     });

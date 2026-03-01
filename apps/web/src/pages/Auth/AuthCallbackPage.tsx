@@ -22,17 +22,14 @@ export function AuthCallbackPage(): JSX.Element {
       }
 
       try {
-        // Fetch user profile with the new access token
         const response = await api.get<IUser>('/auth/me', {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
         });
 
-        // Store auth data
         setAuth(response.data, { accessToken, refreshToken });
 
-        // Redirect to feed
         navigate('/feed', { replace: true });
       } catch (err) {
         setError('Failed to complete authentication. Please try again.');

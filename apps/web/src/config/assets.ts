@@ -1,6 +1,3 @@
-/**
- * Centralized asset URLs and image configuration
- */
 export const assets = {
   images: {
     authHero:

@@ -28,5 +28,4 @@ export class Like {
 
 export const LikeSchema = SchemaFactory.createForClass(Like);
 
-// Ensure one like per user per parent
 LikeSchema.index({ parentId: 1, userId: 1, parentType: 1 }, { unique: true });

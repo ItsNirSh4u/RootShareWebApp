@@ -1,7 +1,6 @@
 import {
   Injectable,
   NotFoundException,
-  ForbiddenException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -23,7 +22,6 @@ export class CommentsService {
   ): Promise<CommentDocument> {
     const { postId, content } = createCommentDto;
 
-    // Verify the post exists
     const post = await this.postModel.findById(postId).exec();
     if (!post) {
       throw new NotFoundException(`Post with ID "${postId}" not found`);
@@ -37,7 +35,6 @@ export class CommentsService {
 
     const savedComment = await newComment.save();
 
-    // Increment the commentsCount on the post
     await this.postModel.findByIdAndUpdate(postId, {
       $inc: { commentsCount: 1 },
     });
@@ -46,7 +43,6 @@ export class CommentsService {
   }
 
   async findAllForPost(postId: string): Promise<CommentDocument[]> {
-    // Verify the post exists
     const post = await this.postModel.findById(postId).exec();
     if (!post) {
       throw new NotFoundException(`Post with ID "${postId}" not found`);
@@ -54,8 +50,8 @@ export class CommentsService {
 
     return this.commentModel
       .find({ postId: new Types.ObjectId(postId) })
-      .populate('userId', 'username profileImageUrl') // Populate user details
-      .populate('likesCount') // Populate likes count
+      .populate('userId', 'username profileImageUrl')
+      .populate('likesCount')
       .sort({ createdAt: 'asc' })
       .exec();
   }
@@ -75,7 +71,6 @@ export class CommentsService {
 
     await comment.deleteOne();
 
-    // Decrement the commentsCount on the post
     await this.postModel.findByIdAndUpdate(comment.postId, {
       $inc: { commentsCount: -1 },
     });

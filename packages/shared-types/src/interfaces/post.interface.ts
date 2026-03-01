@@ -3,7 +3,7 @@ import { PostType } from '../enums';
 export interface IPost {
   id: string;
   userId: string;
-  plantId?: string; // Optional - user might post a general question
+  plantId?: string;
   type: PostType;
   content: string;
   images: string[];
@@ -37,5 +37,5 @@ export interface IPostWithDetails extends IPost {
     name: string;
     species: string;
   };
-  isLiked?: boolean; // For current user
+  isLiked?: boolean;
 }

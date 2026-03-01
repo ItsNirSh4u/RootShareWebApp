@@ -30,7 +30,6 @@ import { CommentExistsGuard } from './guards/comment-exists.guard';
 export class LikesController {
   constructor(private readonly likesService: LikesService) {}
 
-  // POSTS
   @Post('posts/:postId/toggle')
   @UseGuards(PostExistsGuard)
   @HttpCode(200)
@@ -90,7 +89,6 @@ export class LikesController {
     return this.likesService.isLiked('Post', postId, req.user.id);
   }
 
-  // COMMENTS
   @Post('comments/:commentId/toggle')
   @UseGuards(CommentExistsGuard)
   @HttpCode(200)
@@ -152,4 +150,3 @@ export class LikesController {
     return this.likesService.isLiked('Comment', commentId, req.user.id);
   }
 }
-

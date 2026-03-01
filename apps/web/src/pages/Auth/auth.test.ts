@@ -7,8 +7,7 @@ import {
 } from '@/pages/Auth/auth';
 import api from '@/lib/api';
 
-// Mock the api module
-vi.mock('./api', () => ({
+vi.mock('@/lib/api', () => ({
   default: {
     post: vi.fn(),
     get: vi.fn(),

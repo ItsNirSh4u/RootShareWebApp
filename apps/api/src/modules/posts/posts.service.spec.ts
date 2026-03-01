@@ -91,7 +91,7 @@ describe('PostsService', () => {
         userId: new Types.ObjectId(mockUserId),
       });
 
-      const result = await service.create(mockUserId, createWithPlant);
+      await service.create(mockUserId, createWithPlant);
 
       expect(mockPlantsService.findOne).toHaveBeenCalledWith(plantId);
       expect(mockPostModel).toHaveBeenCalledWith({
@@ -106,7 +106,7 @@ describe('PostsService', () => {
 
       mockPlantsService.findOne.mockResolvedValue({
         _id: new Types.ObjectId(plantId),
-        userId: new Types.ObjectId(), // different owner
+        userId: new Types.ObjectId(),
       });
 
       await expect(service.create(mockUserId, createWithPlant)).rejects.toThrow(

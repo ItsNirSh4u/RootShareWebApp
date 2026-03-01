@@ -79,7 +79,7 @@ describe('PostOwnerGuard', () => {
 
       const context = {
         switchToHttp: () => ({
-          getRequest: () => mockRequest,
+          getRequest: (): typeof mockRequest => mockRequest,
         }),
       } as ExecutionContext;
 

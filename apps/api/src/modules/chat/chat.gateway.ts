@@ -17,7 +17,6 @@ import { MessageDocument } from './schemas/message.schema';
 
 @WebSocketGateway({
   cors: {
-    // TODO: In production, restrict to your domain (e.g. 'https://rootshare.com') to prevent unauthorized cross-origin connections
     origin: '*',
   },
 })
@@ -32,7 +31,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly chatService: ChatService,
   ) {}
 
-  async handleConnection(client: Socket) {
+  async handleConnection(client: Socket): Promise<void> {
     try {
       const token = client.handshake.auth.token;
       if (!token) {
@@ -47,7 +46,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  async handleDisconnect(client: Socket) {
+  async handleDisconnect(client: Socket): Promise<void> {
     this.logger.log(`Client disconnected: ${client.id}`);
   }
 
@@ -56,7 +55,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handleJoinRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { roomId: string },
-  ) {
+  ): void {
     this.toggleRoom(client, data.roomId, 'join');
   }
 
@@ -65,7 +64,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handleLeaveRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { roomId: string },
-  ) {
+  ): void {
     this.toggleRoom(client, data.roomId, 'leave');
   }
 
@@ -74,7 +73,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { chatId: string; content: string },
-  ) {
+  ): Promise<void> {
     const { chatId, content } = data;
     const userId = client.data.userId;
 
@@ -100,7 +99,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handleTyping(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { roomId: string; isTyping: boolean },
-  ) {
+  ): void {
     const { roomId, isTyping } = data;
     client.to(roomId).emit(ChatEvent.TYPING, {
       userId: client.data.userId,
@@ -108,11 +107,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  emitToRoom(roomId: string, event: string, data: any) {
+  emitToRoom(roomId: string, event: string, data: Record<string, unknown>): void {
     this.server.to(roomId).emit(event, data);
   }
 
-  private toggleRoom(client: Socket, roomId: string, action: 'join' | 'leave') {
+  private toggleRoom(client: Socket, roomId: string, action: 'join' | 'leave'): void {
     if (action === 'join') {
       client.join(roomId);
       this.logger.log(`Client ${client.id} joined room ${roomId}`);

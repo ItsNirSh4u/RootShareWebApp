@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthLayout } from '../../../components/layouts/AuthLayout';
 import { Button, Input, Divider, ErrorAlert } from '../../../components/ui';
@@ -25,7 +24,6 @@ export function LoginPage(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
 
-  // Get the redirect path from location state, or default to /feed
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/feed';
 
   const validateForm = (): boolean => {
@@ -41,7 +39,7 @@ export function LoginPage(): JSX.Element {
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+  const handleSubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
     setError(null);
     if (!validateForm()) {
@@ -51,10 +49,8 @@ export function LoginPage(): JSX.Element {
     try {
       const response = await loginUser({ email: email.trim(), password });
 
-      // Store tokens in localStorage via auth store
       setAuth(response.user, response.tokens);
 
-      // Redirect to the intended page
       navigate(from, { replace: true });
     } catch (err) {
       setError(getAuthErrorMessage(err));

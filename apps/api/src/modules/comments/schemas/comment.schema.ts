@@ -5,29 +5,17 @@ import { Like } from '../../likes/schemas/like.schema';
 export type CommentDocument = Comment & Document;
 
 @Schema({
-
   timestamps: true,
-
   toJSON: {
-
     virtuals: true,
-
-        transform: function (doc, ret: any) {
-
-          ret.commentId = ret._id;
-
-          delete ret._id;
-
-          delete ret.id;
-
-          delete ret.__v;
-
-        },
-
+    transform: function (doc, ret: any) {
+      ret.commentId = ret._id;
+      delete ret._id;
+      delete ret.id;
+      delete ret.__v;
+    },
   },
-
   toObject: { virtuals: true },
-
 })
 export class Comment {
   @Prop({ type: Types.ObjectId, ref: 'Post', required: true })

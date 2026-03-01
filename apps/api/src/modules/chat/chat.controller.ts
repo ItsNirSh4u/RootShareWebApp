@@ -12,6 +12,12 @@ import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
 import { ChatMemberGuard } from './guards/chat-member.guard';
 import { ChatAdminGuard } from './guards/chat-admin.guard';
 import { IRequest } from '@/common/interfaces/request.interface';
+import { Chat, ChatDocument } from './schemas/chat.schema';
+import { Message } from './schemas/message.schema';
+
+interface ChatRequest extends IRequest {
+  chat: ChatDocument;
+}
 
 @Controller('chats')
 @UseGuards(JwtAuthGuard)
@@ -21,46 +27,40 @@ export class ChatController {
     private readonly chatGateway: ChatGateway,
   ) {}
 
-  // --- Direct chat endpoints ---
-
   @Post()
-  createChat(@Body() createChatDto: CreateChatDto, @Req() req: IRequest) {
+  createChat(@Body() createChatDto: CreateChatDto, @Req() req: IRequest): Promise<Chat> {
     const { userId } = createChatDto;
     const currentUserId = req.user.id;
     return this.chatService.createChat(currentUserId, userId);
   }
 
   @Get()
-  getChatsForUser(@Req() req: IRequest) {
+  getChatsForUser(@Req() req: IRequest): Promise<Chat[]> {
     const currentUserId = req.user.id;
     return this.chatService.getChatsForUser(currentUserId);
   }
 
   @Get('with/:userId')
-  getChatByParticipant(@Param('userId') userId: string, @Req() req: IRequest) {
+  getChatByParticipant(@Param('userId') userId: string, @Req() req: IRequest): Promise<Chat | null> {
     const currentUserId = req.user.id;
     return this.chatService.getChatByParticipants(currentUserId, userId);
   }
 
-  // --- Group chat endpoints (must be before :chatId routes) ---
-
   @Post('group')
-  createGroupChat(@Body() dto: CreateGroupChatDto, @Req() req: IRequest) {
+  createGroupChat(@Body() dto: CreateGroupChatDto, @Req() req: IRequest): Promise<ChatDocument> {
     return this.chatService.createGroupChat(req.user.id, dto.name, dto.userIds);
   }
-
-  // --- Parameterized :chatId endpoints ---
 
   @Get(':chatId/messages')
   loadMessagesById(
     @Param('chatId') chatId: string,
     @Query() getMessagesDto: GetMessagesDto,
-  ) {
+  ): Promise<Message[]> {
     return this.chatService.loadMessagesById(chatId, getMessagesDto);
   }
 
   @Post(':chatId/read')
-  markAsRead(@Param('chatId') chatId: string, @Req() req: IRequest) {
+  markAsRead(@Param('chatId') chatId: string, @Req() req: IRequest): Promise<void> {
     const currentUserId = req.user.id;
     return this.chatService.markAsRead(chatId, currentUserId);
   }
@@ -71,7 +71,7 @@ export class ChatController {
     @Param('chatId') chatId: string,
     @Body() dto: AddMembersDto,
     @Req() req: IRequest,
-  ) {
+  ): Promise<ChatDocument> {
     const chat = await this.chatService.addMembers(chatId, dto.userIds);
     this.chatGateway.emitToRoom(chatId, 'member_added', {
       chatId,
@@ -86,8 +86,8 @@ export class ChatController {
   async removeMember(
     @Param('chatId') chatId: string,
     @Body() dto: RemoveMemberDto,
-    @Req() req: any,
-  ) {
+    @Req() req: ChatRequest,
+  ): Promise<ChatDocument | null> {
     const result = await this.chatService.removeMember(req.chat, dto.userId);
     this.chatGateway.emitToRoom(chatId, 'member_removed', {
       chatId,
@@ -101,8 +101,8 @@ export class ChatController {
   @UseGuards(ChatMemberGuard)
   async leaveGroup(
     @Param('chatId') chatId: string,
-    @Req() req: any,
-  ) {
+    @Req() req: ChatRequest,
+  ): Promise<ChatDocument | null> {
     const result = await this.chatService.leaveGroup(req.chat, req.user.id);
     this.chatGateway.emitToRoom(chatId, 'member_left', {
       chatId,
@@ -117,7 +117,7 @@ export class ChatController {
     @Param('chatId') chatId: string,
     @Body() dto: RenameGroupDto,
     @Req() req: IRequest,
-  ) {
+  ): Promise<ChatDocument> {
     const chat = await this.chatService.renameGroup(chatId, dto.name);
     this.chatGateway.emitToRoom(chatId, 'group_renamed', {
       chatId,
@@ -132,7 +132,7 @@ export class ChatController {
   async transferAdmin(
     @Param('chatId') chatId: string,
     @Body() dto: TransferAdminDto,
-  ) {
+  ): Promise<ChatDocument> {
     const chat = await this.chatService.transferAdmin(chatId, dto.userId);
     this.chatGateway.emitToRoom(chatId, 'admin_transferred', {
       chatId,
@@ -143,7 +143,7 @@ export class ChatController {
 
   @Delete(':chatId')
   @UseGuards(ChatAdminGuard)
-  async deleteGroup(@Param('chatId') chatId: string) {
+  async deleteGroup(@Param('chatId') chatId: string): Promise<{ message: string }> {
     this.chatGateway.emitToRoom(chatId, 'group_deleted', { chatId });
     await this.chatService.deleteGroup(chatId);
     return { message: 'Group deleted successfully' };

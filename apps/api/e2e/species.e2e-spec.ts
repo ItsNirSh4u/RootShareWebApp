@@ -71,25 +71,21 @@ describe('Species (e2e)', () => {
 
     userModel = moduleFixture.get<Model<UserDocument>>(getModelToken(User.name));
 
-    // Register regular user
     const userResponse = await request(app.getHttpServer())
       .post('/api/auth/register')
       .send(testUser);
     userAccessToken = userResponse.body.tokens.accessToken;
 
-    // Register and upgrade admin user
     const adminResponse = await request(app.getHttpServer())
       .post('/api/auth/register')
       .send(adminUser);
     adminAccessToken = adminResponse.body.tokens.accessToken;
 
-    // Update user to admin role
     await userModel.updateOne(
       { email: adminUser.email },
       { role: UserRole.ADMIN },
     );
 
-    // Re-login admin to get updated token with admin role
     const adminLoginResponse = await request(app.getHttpServer())
       .post('/api/auth/login')
       .send({
@@ -104,8 +100,6 @@ describe('Species (e2e)', () => {
     await mongoServer.stop();
   });
 
-  // ========== Public Endpoints ==========
-
   describe('GET /api/species', () => {
     it('should return all species (public)', async () => {
       const response = await request(app.getHttpServer())
@@ -115,8 +109,6 @@ describe('Species (e2e)', () => {
       expect(Array.isArray(response.body)).toBe(true);
     });
   });
-
-  // ========== Admin Species Management ==========
 
   describe('POST /api/species/admin', () => {
     it('should create a species (admin)', async () => {
@@ -214,8 +206,6 @@ describe('Species (e2e)', () => {
     });
   });
 
-  // ========== Species Requests ==========
-
   describe('POST /api/species/requests', () => {
     it('should create a species request (user)', async () => {
       const response = await request(app.getHttpServer())
@@ -284,8 +274,6 @@ describe('Species (e2e)', () => {
     });
   });
 
-  // ========== Admin Request Management ==========
-
   describe('GET /api/species/admin/requests', () => {
     it('should return all requests (admin)', async () => {
       const response = await request(app.getHttpServer())
@@ -345,7 +333,6 @@ describe('Species (e2e)', () => {
     });
 
     it('should reject a request with reason (admin)', async () => {
-      // Create a new request for this test
       const newRequest = await request(app.getHttpServer())
         .post('/api/species/requests')
         .set('Authorization', `Bearer ${userAccessToken}`)

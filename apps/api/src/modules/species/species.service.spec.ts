@@ -90,8 +90,6 @@ describe('SpeciesService', () => {
     jest.clearAllMocks();
   });
 
-  // ========== Species Tests ==========
-
   describe('createSpecies', () => {
     const createSpeciesDto = {
       name: 'New Species',
@@ -194,8 +192,6 @@ describe('SpeciesService', () => {
       });
     });
   });
-
-  // ========== Species Request Tests ==========
 
   describe('createSpeciesRequest', () => {
     const createRequestDto = {

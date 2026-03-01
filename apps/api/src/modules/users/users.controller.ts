@@ -31,6 +31,7 @@ import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { IRequest } from '@/common/interfaces/request.interface';
+import { IUser } from '@rootshare/shared-types';
 
 const getProfileImagesDir = (): string => {
   const uploadPath = process.env.UPLOAD_PATH || './uploads';
@@ -52,7 +53,7 @@ const profileImageStorage = diskStorage({
   },
 });
 
-const imageFileFilter = (_req: any, file: any, cb: any) => {
+const imageFileFilter = (_req: Express.Request, file: Express.Multer.File, cb: (error: Error | null, acceptFile: boolean) => void): void => {
   if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
     return cb(new BadRequestException('Only image files are allowed'), false);
   }
@@ -70,7 +71,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Search for users' })
   @ApiQuery({ name: 'query', description: 'Search query for username', type: String })
   @ApiResponse({ status: 200, description: 'Users found' })
-  async searchUsers(@Query('query') query: string, @Req() req: IRequest) {
+  async searchUsers(@Query('query') query: string, @Req() req: IRequest): Promise<IUser[]> {
     const currentUserId = req.user.id;
     return this.usersService.searchUsers(query, currentUserId);
   }
@@ -80,7 +81,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiResponse({ status: 200, description: 'User found' })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: string): Promise<IUser | null> {
     return this.usersService.findById(id);
   }
 
@@ -88,7 +89,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Update current user profile' })
   @ApiResponse({ status: 200, description: 'Profile updated successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async updateProfile(@Request() req: any, @Body() updateUserDto: UpdateUserDto) {
+  async updateProfile(@Request() req: IRequest, @Body() updateUserDto: UpdateUserDto): Promise<IUser> {
     return this.usersService.update(req.user.id, updateUserDto);
   }
 
@@ -113,9 +114,9 @@ export class UsersController {
     }),
   )
   async uploadProfileImage(
-    @Request() req: any,
+    @Request() req: IRequest,
     @UploadedFile() file: Express.Multer.File,
-  ) {
+  ): Promise<IUser> {
     if (!file) {
       throw new BadRequestException('Image file is required');
     }

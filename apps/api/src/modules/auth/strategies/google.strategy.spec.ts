@@ -1,10 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { GoogleStrategy, GoogleProfile } from './google.strategy';
+import { GoogleStrategy } from './google.strategy';
 
 describe('GoogleStrategy', () => {
   let strategy: GoogleStrategy;
-  let configService: jest.Mocked<ConfigService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -27,7 +26,6 @@ describe('GoogleStrategy', () => {
     }).compile();
 
     strategy = module.get<GoogleStrategy>(GoogleStrategy);
-    configService = module.get(ConfigService);
   });
 
   describe('validate', () => {
