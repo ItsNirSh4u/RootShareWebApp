@@ -44,12 +44,6 @@ export function PostCard({ post, onLike }: PostCardProps): JSX.Element {
   const avatarLetter = post.user.username.charAt(0).toUpperCase();
   const visibleImages = post.images.slice(0, 3);
 
-  const handleLike = (): void => {
-    if (onLike) {
-      onLike(post.id);
-    }
-  };
-
   return (
     <article className="bg-bg-card rounded-lg shadow-soft-md border border-border-default p-4 flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
@@ -118,7 +112,7 @@ export function PostCard({ post, onLike }: PostCardProps): JSX.Element {
       <div className="flex items-center gap-5 pt-1 border-t border-border-muted">
         <button
           type="button"
-          onClick={handleLike}
+          onClick={() => onLike?.(post.id)}
           disabled={!onLike}
           className={cn(
             'flex items-center gap-1.5 text-sm transition-colors',

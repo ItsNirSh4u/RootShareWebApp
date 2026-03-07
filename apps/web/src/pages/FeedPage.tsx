@@ -5,7 +5,6 @@ import { PostType } from '@rootshare/shared-types';
 import { ErrorAlert } from '@/components/ui';
 import { FeaturedPlantsCarousel, FeedFilters, PostCard } from '@/components/feed';
 import { fetchPosts, fetchFeaturedPlants, toggleLikePost } from '@/pages/Feed/feed';
-import type { PostFilter } from '@/pages/Feed/feed';
 
 type ActiveType = PostType | 'all';
 
@@ -49,18 +48,6 @@ export function FeedPage(): JSX.Element {
     },
   });
 
-  const handleLike = (postId: string): void => {
-    likeMutation.mutate(postId);
-  };
-
-  const handleTypeChange = (type: ActiveType): void => {
-    setActiveType(type);
-  };
-
-  const handleSearchChange = (value: string): void => {
-    setSearch(value);
-  };
-
   const filteredPosts = useMemo(() => {
     if (!posts) return [];
 
@@ -97,9 +84,9 @@ export function FeedPage(): JSX.Element {
 
         <FeedFilters
           activeType={activeType}
-          onTypeChange={handleTypeChange}
+          onTypeChange={setActiveType}
           search={search}
-          onSearchChange={handleSearchChange}
+          onSearchChange={setSearch}
         />
 
         <section aria-label="Posts" className="flex flex-col gap-4">
@@ -115,7 +102,7 @@ export function FeedPage(): JSX.Element {
             <EmptyState />
           ) : (
             filteredPosts.map((post) => (
-              <PostCard key={post.id} post={post} onLike={handleLike} />
+              <PostCard key={post.id} post={post} onLike={(id) => likeMutation.mutate(id)} />
             ))
           )}
         </section>
