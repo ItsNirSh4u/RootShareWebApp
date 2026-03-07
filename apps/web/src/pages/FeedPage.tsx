@@ -77,51 +77,40 @@ export function FeedPage(): JSX.Element {
           <h1 className="text-2xl font-bold text-text-base">Community Feed</h1>
         </header>
 
-        <div className="flex gap-6 items-start">
-          <div className="flex-1 min-w-0 flex flex-col gap-5">
-            <div className="lg:hidden">
-              <FeaturedPlantsCarousel
-                plants={featuredPlants ?? []}
-                isLoading={plantsLoading}
-              />
-            </div>
+        <div className="flex flex-col gap-5">
+          <FeaturedPlantsCarousel
+            plants={featuredPlants ?? []}
+            isLoading={plantsLoading}
+          />
 
-            <FeedFilters
-              activeType={activeType}
-              onTypeChange={setActiveType}
-              search={search}
-              onSearchChange={setSearch}
-            />
+          <FeedFilters
+            activeType={activeType}
+            onTypeChange={setActiveType}
+            search={search}
+            onSearchChange={setSearch}
+          />
 
-            <section aria-label="Posts" className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {postsError ? (
-                <div className="col-span-full">
-                  <ErrorAlert message="Failed to load posts" />
-                </div>
-              ) : postsLoading ? (
-                <>
-                  <PostSkeleton />
-                  <PostSkeleton />
-                  <PostSkeleton />
-                </>
-              ) : filteredPosts.length === 0 ? (
-                <div className="col-span-full">
-                  <EmptyState />
-                </div>
-              ) : (
-                filteredPosts.map((post) => (
-                  <PostCard key={post.id} post={post} onLike={(id) => likeMutation.mutate(id)} />
-                ))
-              )}
-            </section>
-          </div>
-
-          <aside className="w-72 xl:w-80 flex-shrink-0 hidden lg:block sticky top-6">
-            <FeaturedPlantsCarousel
-              plants={featuredPlants ?? []}
-              isLoading={plantsLoading}
-            />
-          </aside>
+          <section aria-label="Posts" className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {postsError ? (
+              <div className="col-span-full">
+                <ErrorAlert message="Failed to load posts" />
+              </div>
+            ) : postsLoading ? (
+              <>
+                <PostSkeleton />
+                <PostSkeleton />
+                <PostSkeleton />
+              </>
+            ) : filteredPosts.length === 0 ? (
+              <div className="col-span-full">
+                <EmptyState />
+              </div>
+            ) : (
+              filteredPosts.map((post) => (
+                <PostCard key={post.id} post={post} onLike={(id) => likeMutation.mutate(id)} />
+              ))
+            )}
+          </section>
         </div>
       </div>
     </div>
