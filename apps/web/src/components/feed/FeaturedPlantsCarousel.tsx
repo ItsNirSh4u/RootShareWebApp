@@ -88,9 +88,9 @@ export function FeaturedPlantsCarousel({ plants, isLoading }: FeaturedPlantsCaro
 
       {isLoading ? (
         <div className="flex gap-3">
-          <PlantCardSkeleton />
-          <PlantCardSkeleton />
-          <PlantCardSkeleton />
+          {[0, 1, 2].map((i) => (
+            <PlantCardSkeleton key={i} />
+          ))}
         </div>
       ) : plants.length === 0 ? (
         <p className="text-sm text-text-muted py-2">No featured plants yet.</p>
