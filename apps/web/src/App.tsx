@@ -7,6 +7,7 @@ import { FeedPage } from '@/pages/FeedPage';
 import { InventoryPage } from '@/pages/InventoryPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { useAuthStore } from '@/stores/auth.store';
+import { AppLayout } from '@/components/layouts/AppLayout';
 
 function App(): JSX.Element {
   const { isAuthenticated } = useAuthStore();
@@ -19,14 +20,14 @@ function App(): JSX.Element {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
-        <Route path="/feed" element={isAuthenticated ? <FeedPage /> : <Navigate to="/login" />} />
+        <Route path="/feed" element={isAuthenticated ? <AppLayout><FeedPage /></AppLayout> : <Navigate to="/login" />} />
         <Route
           path="/inventory"
-          element={isAuthenticated ? <InventoryPage /> : <Navigate to="/login" />}
+          element={isAuthenticated ? <AppLayout><InventoryPage /></AppLayout> : <Navigate to="/login" />}
         />
         <Route
           path="/profile"
-          element={isAuthenticated ? <ProfilePage /> : <Navigate to="/login" />}
+          element={isAuthenticated ? <AppLayout><ProfilePage /></AppLayout> : <Navigate to="/login" />}
         />
       </Routes>
     </BrowserRouter>

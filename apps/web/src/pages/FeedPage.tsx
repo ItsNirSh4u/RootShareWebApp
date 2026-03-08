@@ -70,42 +70,48 @@ export function FeedPage(): JSX.Element {
   }, [posts, activeType, search]);
 
   return (
-    <div className="min-h-screen bg-bg-main">
-      <div className="max-w-2xl mx-auto px-4 py-8 flex flex-col gap-6">
-        <header className="flex items-center gap-2.5">
+    <div className="min-h-full bg-bg-main">
+      <div className="max-w-screen-2xl mx-auto px-4 lg:px-6 py-6">
+        <header className="flex items-center gap-2.5 mb-6">
           <Leaf size={26} className="text-primary" aria-hidden />
           <h1 className="text-2xl font-bold text-text-base">Community Feed</h1>
         </header>
 
-        <FeaturedPlantsCarousel
-          plants={featuredPlants ?? []}
-          isLoading={plantsLoading}
-        />
+        <div className="flex flex-col gap-5">
+          <FeaturedPlantsCarousel
+            plants={featuredPlants ?? []}
+            isLoading={plantsLoading}
+          />
 
-        <FeedFilters
-          activeType={activeType}
-          onTypeChange={setActiveType}
-          search={search}
-          onSearchChange={setSearch}
-        />
+          <FeedFilters
+            activeType={activeType}
+            onTypeChange={setActiveType}
+            search={search}
+            onSearchChange={setSearch}
+          />
 
-        <section aria-label="Posts" className="flex flex-col gap-4">
-          {postsError ? (
-            <ErrorAlert message="Failed to load posts" />
-          ) : postsLoading ? (
-            <>
-              <PostSkeleton />
-              <PostSkeleton />
-              <PostSkeleton />
-            </>
-          ) : filteredPosts.length === 0 ? (
-            <EmptyState />
-          ) : (
-            filteredPosts.map((post) => (
-              <PostCard key={post.id} post={post} onLike={(id) => likeMutation.mutate(id)} />
-            ))
-          )}
-        </section>
+          <section aria-label="Posts" className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {postsError ? (
+              <div className="col-span-full">
+                <ErrorAlert message="Failed to load posts" />
+              </div>
+            ) : postsLoading ? (
+              <>
+                <PostSkeleton />
+                <PostSkeleton />
+                <PostSkeleton />
+              </>
+            ) : filteredPosts.length === 0 ? (
+              <div className="col-span-full">
+                <EmptyState />
+              </div>
+            ) : (
+              filteredPosts.map((post) => (
+                <PostCard key={post.id} post={post} onLike={(id) => likeMutation.mutate(id)} />
+              ))
+            )}
+          </section>
+        </div>
       </div>
     </div>
   );
