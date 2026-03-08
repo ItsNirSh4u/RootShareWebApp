@@ -5,7 +5,7 @@ import { RegisterPage } from '@/pages/Auth/Register/RegisterPage';
 import { AuthCallbackPage } from '@/pages/Auth/AuthCallbackPage';
 import { FeedPage } from '@/pages/FeedPage';
 import { InventoryPage } from '@/pages/InventoryPage';
-import { ProfilePage } from '@/pages/ProfilePage';
+import { ProfilePage } from '@/pages/Profile/ProfilePage';
 import { useAuthStore } from '@/stores/auth.store';
 import { AppLayout } from '@/components/layouts/AppLayout';
 
