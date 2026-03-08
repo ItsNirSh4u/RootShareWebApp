@@ -115,6 +115,8 @@ export function ProfilePage(): JSX.Element {
   const { user, updateUser } = useAuthStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [userId] = useState(() => user?.id);
+
   const [activeTab, setActiveTab] = useState<Tab>('posts');
   const [editingUsername, setEditingUsername] = useState(false);
   const [usernameValue, setUsernameValue] = useState(user?.username ?? '');
@@ -124,9 +126,9 @@ export function ProfilePage(): JSX.Element {
     isLoading: postsLoading,
     error: postsError,
   } = useQuery({
-    queryKey: ['profile', 'posts', user?.id],
-    queryFn: () => fetchUserPosts(user!.id),
-    enabled: !!user,
+    queryKey: ['profile', 'posts', userId],
+    queryFn: () => fetchUserPosts(userId!),
+    enabled: !!userId,
   });
 
   const {
@@ -136,7 +138,7 @@ export function ProfilePage(): JSX.Element {
   } = useQuery({
     queryKey: ['profile', 'plants'],
     queryFn: fetchUserPlants,
-    enabled: !!user,
+    enabled: !!userId,
   });
 
   const updateUsernameMutation = useMutation({
