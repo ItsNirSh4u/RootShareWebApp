@@ -279,32 +279,36 @@ export function ProfilePage(): JSX.Element {
 
               {updateUsernameMutation.isError && <ErrorAlert message="Failed to update username" />}
               {uploadImageMutation.isError && <ErrorAlert message="Failed to upload image" />}
-            </div>
-          </div>
+            </div >
+          </div >
 
           <div className="mt-6 pt-5 border-t border-border-muted flex gap-8">
             <div className="flex flex-col items-center gap-0.5">
               <span className="text-xl font-bold text-text-base">
-                {postsLoading ? (
-                  <span className="animate-pulse bg-bg-muted rounded w-8 h-6 inline-block" />
-                ) : (
-                  posts?.length ?? 0
-                )}
-              </span>
+                {
+                  postsLoading ? (
+                    <span className="animate-pulse bg-bg-muted rounded w-8 h-6 inline-block" />
+                  ) : (
+                    posts?.length ?? 0
+                  )
+                }
+              </span >
               <span className="text-xs text-text-muted">Posts</span>
-            </div>
+            </div >
             <div className="flex flex-col items-center gap-0.5">
               <span className="text-xl font-bold text-text-base">
-                {plantsLoading ? (
-                  <span className="animate-pulse bg-bg-muted rounded w-8 h-6 inline-block" />
-                ) : (
-                  plants?.length ?? 0
-                )}
-              </span>
+                {
+                  plantsLoading ? (
+                    <span className="animate-pulse bg-bg-muted rounded w-8 h-6 inline-block" />
+                  ) : (
+                    plants?.length ?? 0
+                  )
+                }
+              </span >
               <span className="text-xs text-text-muted">Plants</span>
-            </div>
-          </div>
-        </div>
+            </div >
+          </div >
+        </div >
 
         <div className="flex items-center justify-between mb-4 border-b border-border-muted">
           <div className="flex gap-1">
@@ -400,27 +404,31 @@ export function ProfilePage(): JSX.Element {
         )}
       </div>
 
-      {selectedPost && (
-        <PostModal
-          mode="view"
-          post={selectedPost}
-          currentUserId={user.id}
-          onClose={() => setSelectedPost(null)}
-          onSuccess={() => {
-            handlePostMutationSuccess();
-            setSelectedPost(null);
-          }}
-        />
-      )}
+      {
+        selectedPost && (
+          <PostModal
+            mode="view"
+            post={selectedPost}
+            currentUserId={user.id}
+            onClose={() => setSelectedPost(null)}
+            onSuccess={() => {
+              handlePostMutationSuccess();
+              setSelectedPost(null);
+            }}
+          />
+        )
+      }
 
-      {showCreatePost && (
-        <PostModal
-          mode="create"
-          currentUserId={user.id}
-          onClose={() => setShowCreatePost(false)}
-          onSuccess={handlePostMutationSuccess}
-        />
-      )}
-    </div>
+      {
+        showCreatePost && (
+          <PostModal
+            mode="create"
+            currentUserId={user.id}
+            onClose={() => setShowCreatePost(false)}
+            onSuccess={handlePostMutationSuccess}
+          />
+        )
+      }
+    </div >
   );
 }
