@@ -1,21 +1,18 @@
 import { useState, useRef } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { Pencil, Check, X, Leaf, Sprout, Camera } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Pencil, Check, X, Leaf, Sprout, Camera, Plus } from 'lucide-react';
 import type { IPostWithDetails, IPlant } from '@rootshare/shared-types';
 import { PlantStatus, PostType } from '@rootshare/shared-types';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { Spinner } from '@/components/ui/Spinner';
+import { PostModal } from '@/components/feed/PostModal';
 import { useAuthStore } from '@/stores/auth.store';
 import { cn } from '@/lib/utils';
 import { fetchUserPosts, fetchUserPlants, updateProfile, uploadProfileImage } from './profile';
 
 type Tab = 'posts' | 'plants';
-
-function AvatarSkeleton(): JSX.Element {
-  return <div className="animate-pulse bg-bg-muted rounded-full w-24 h-24" />;
-}
 
 function CardSkeleton(): JSX.Element {
   return <div className="animate-pulse bg-bg-muted rounded-lg h-40" />;
@@ -64,17 +61,16 @@ function PlantStatusBadge({ status }: PlantStatusBadgeProps): JSX.Element {
   );
 }
 
-type ProfilePostCardProps = { post: IPostWithDetails };
+type ProfilePostCardProps = { post: IPostWithDetails; onClick: (post: IPostWithDetails) => void };
 
-function ProfilePostCard({ post }: ProfilePostCardProps): JSX.Element {
+function ProfilePostCard({ post, onClick }: ProfilePostCardProps): JSX.Element {
   return (
-    <div className="bg-bg-card border border-border-default rounded-lg overflow-hidden flex flex-col">
+    <div
+      className="bg-bg-card border border-border-default rounded-lg overflow-hidden flex flex-col cursor-pointer hover:border-primary/40 transition-colors"
+      onClick={() => onClick(post)}
+    >
       {post.images[0] && (
-        <img
-          src={post.images[0]}
-          alt="Post"
-          className="w-full h-32 object-cover"
-        />
+        <img src={post.images[0]} alt="Post" className="w-full h-32 object-cover" />
       )}
       <div className="p-3 flex flex-col gap-2 flex-1">
         <div className="flex items-center justify-between gap-2">
@@ -94,11 +90,7 @@ function PlantCard({ plant }: PlantCardProps): JSX.Element {
   return (
     <div className="bg-bg-card border border-border-default rounded-lg overflow-hidden flex flex-col">
       {plant.imageUrl && (
-        <img
-          src={plant.imageUrl}
-          alt={plant.name}
-          className="w-full h-32 object-cover"
-        />
+        <img src={plant.imageUrl} alt={plant.name} className="w-full h-32 object-cover" />
       )}
       <div className="p-3 flex flex-col gap-1.5">
         <div className="flex items-center justify-between gap-2">
@@ -113,13 +105,15 @@ function PlantCard({ plant }: PlantCardProps): JSX.Element {
 
 export function ProfilePage(): JSX.Element {
   const { user, updateUser } = useAuthStore();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [userId] = useState(() => user?.id);
-
   const [activeTab, setActiveTab] = useState<Tab>('posts');
   const [editingUsername, setEditingUsername] = useState(false);
   const [usernameValue, setUsernameValue] = useState(user?.username ?? '');
+  const [selectedPost, setSelectedPost] = useState<IPostWithDetails | null>(null);
+  const [showCreatePost, setShowCreatePost] = useState(false);
 
   const {
     data: posts,
@@ -188,6 +182,11 @@ export function ProfilePage(): JSX.Element {
     }
   }
 
+  function handlePostMutationSuccess() {
+    queryClient.invalidateQueries({ queryKey: ['profile', 'posts', userId] });
+    queryClient.invalidateQueries({ queryKey: ['posts'] });
+  }
+
   if (!user) return <div />;
 
   return (
@@ -207,11 +206,7 @@ export function ProfilePage(): JSX.Element {
                     <Spinner size="sm" />
                   </div>
                 ) : avatarSrc ? (
-                  <img
-                    src={avatarSrc}
-                    alt={user.username}
-                    className="w-24 h-24 object-cover"
-                  />
+                  <img src={avatarSrc} alt={user.username} className="w-24 h-24 object-cover" />
                 ) : (
                   <div className="w-24 h-24 rounded-full bg-primary flex items-center justify-center">
                     <span className="text-2xl font-bold text-primary-foreground">
@@ -280,60 +275,80 @@ export function ProfilePage(): JSX.Element {
               </div>
 
               <p className="text-sm text-text-muted">{user.email}</p>
-              <p className="text-xs text-text-muted">
-                Member since {formatDate(user.createdAt)}
-              </p>
+              <p className="text-xs text-text-muted">Member since {formatDate(user.createdAt)}</p>
 
-              {updateUsernameMutation.isError && (
-                <ErrorAlert message="Failed to update username" />
-              )}
-              {uploadImageMutation.isError && (
-                <ErrorAlert message="Failed to upload image" />
-              )}
-            </div>
-          </div>
+              {updateUsernameMutation.isError && <ErrorAlert message="Failed to update username" />}
+              {uploadImageMutation.isError && <ErrorAlert message="Failed to upload image" />}
+            </div >
+          </div >
 
           <div className="mt-6 pt-5 border-t border-border-muted flex gap-8">
             <div className="flex flex-col items-center gap-0.5">
               <span className="text-xl font-bold text-text-base">
-                {postsLoading ? <span className="animate-pulse bg-bg-muted rounded w-8 h-6 inline-block" /> : (posts?.length ?? 0)}
-              </span>
+                {
+                  postsLoading ? (
+                    <span className="animate-pulse bg-bg-muted rounded w-8 h-6 inline-block" />
+                  ) : (
+                    posts?.length ?? 0
+                  )
+                }
+              </span >
               <span className="text-xs text-text-muted">Posts</span>
-            </div>
+            </div >
             <div className="flex flex-col items-center gap-0.5">
               <span className="text-xl font-bold text-text-base">
-                {plantsLoading ? <span className="animate-pulse bg-bg-muted rounded w-8 h-6 inline-block" /> : (plants?.length ?? 0)}
-              </span>
+                {
+                  plantsLoading ? (
+                    <span className="animate-pulse bg-bg-muted rounded w-8 h-6 inline-block" />
+                  ) : (
+                    plants?.length ?? 0
+                  )
+                }
+              </span >
               <span className="text-xs text-text-muted">Plants</span>
-            </div>
-          </div>
-        </div>
+            </div >
+          </div >
+        </div >
 
-        <div className="flex gap-1 mb-4 border-b border-border-muted">
-          <button
-            type="button"
-            onClick={() => setActiveTab('posts')}
-            className={cn(
-              'px-5 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px',
-              activeTab === 'posts'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-text-muted hover:text-text-base',
-            )}
-          >
-            Posts
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('plants')}
-            className={cn(
-              'px-5 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px',
-              activeTab === 'plants'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-text-muted hover:text-text-base',
-            )}
-          >
-            Plants
-          </button>
+        <div className="flex items-center justify-between mb-4 border-b border-border-muted">
+          <div className="flex gap-1">
+            <button
+              type="button"
+              onClick={() => setActiveTab('posts')}
+              className={cn(
+                'px-5 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px',
+                activeTab === 'posts'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-text-muted hover:text-text-base',
+              )}
+            >
+              Posts
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('plants')}
+              className={cn(
+                'px-5 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px',
+                activeTab === 'plants'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-text-muted hover:text-text-base',
+              )}
+            >
+              Plants
+            </button>
+          </div>
+
+          {activeTab === 'posts' && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowCreatePost(true)}
+              className="mb-1 gap-1.5"
+            >
+              <Plus size={15} />
+              New Post
+            </Button>
+          )}
         </div>
 
         {activeTab === 'posts' && (
@@ -355,7 +370,7 @@ export function ProfilePage(): JSX.Element {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {posts.map((post) => (
-                  <ProfilePostCard key={post.id} post={post} />
+                  <ProfilePostCard key={post.id} post={post} onClick={setSelectedPost} />
                 ))}
               </div>
             )}
@@ -388,6 +403,32 @@ export function ProfilePage(): JSX.Element {
           </section>
         )}
       </div>
-    </div>
+
+      {
+        selectedPost && (
+          <PostModal
+            mode="view"
+            post={selectedPost}
+            currentUserId={user.id}
+            onClose={() => setSelectedPost(null)}
+            onSuccess={() => {
+              handlePostMutationSuccess();
+              setSelectedPost(null);
+            }}
+          />
+        )
+      }
+
+      {
+        showCreatePost && (
+          <PostModal
+            mode="create"
+            currentUserId={user.id}
+            onClose={() => setShowCreatePost(false)}
+            onSuccess={handlePostMutationSuccess}
+          />
+        )
+      }
+    </div >
   );
 }

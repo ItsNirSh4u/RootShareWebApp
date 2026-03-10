@@ -124,7 +124,7 @@ describe('PostsService', () => {
         exec: jest.fn().mockResolvedValue(mockPosts),
       });
 
-      const result = await service.findAll();
+      const result = await service.findAll(mockUserId);
 
       expect(mockPostModel.find).toHaveBeenCalled();
       expect(result).toEqual(mockPosts);

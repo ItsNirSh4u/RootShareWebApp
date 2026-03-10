@@ -8,6 +8,9 @@ import {
   Delete,
   UseGuards,
   Request,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -18,7 +21,13 @@ import {
   ApiBadRequestResponse,
   ApiNotFoundResponse,
   ApiForbiddenResponse,
+  ApiConsumes,
+  ApiBody,
 } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import * as path from 'path';
+import * as fs from 'fs';
 import { PostsService } from './posts.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PostOwnerGuard } from './guards/post-owner.guard';
@@ -31,6 +40,31 @@ import {
   ApiProtectedReadResponses,
 } from '../../common/decorators';
 
+const postImageStorage = diskStorage({
+  destination: (_req, _file, cb) => {
+    const uploadPath = process.env.UPLOAD_PATH || './uploads';
+    const dir = path.join(uploadPath, 'post-images');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (_req, file, cb) => {
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    const ext = path.extname(file.originalname) || '.jpg';
+    cb(null, `post-${uniqueSuffix}${ext}`);
+  },
+});
+
+const imageFileFilter = (
+  _req: Express.Request,
+  file: Express.Multer.File,
+  cb: (error: Error | null, acceptFile: boolean) => void,
+): void => {
+  if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
+    return cb(new BadRequestException('Only image files are allowed'), false);
+  }
+  cb(null, true);
+};
+
 @ApiTags('posts')
 @Controller('posts')
 @UseGuards(JwtAuthGuard)
@@ -40,11 +74,7 @@ export class PostsController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new post' })
-  @ApiResponse({
-    status: 201,
-    description: 'The post has been successfully created.',
-    type: PostSchema,
-  })
+  @ApiResponse({ status: 201, description: 'The post has been successfully created.', type: PostSchema })
   @ApiBadRequestResponse({ description: 'Invalid payload (e.g., invalid plantId format)' })
   @ApiNotFoundResponse({ description: 'Referenced plant not found' })
   @ApiForbiddenResponse({ description: 'Plant does not belong to the user' })
@@ -56,26 +86,30 @@ export class PostsController {
     return this.postsService.create(req.user.id, createPostDto);
   }
 
+  @Post('images')
+  @ApiOperation({ summary: 'Upload an image for a post' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ schema: { type: 'object', properties: { image: { type: 'string', format: 'binary' } } } })
+  @ApiResponse({ status: 201, description: 'Image uploaded successfully', schema: { properties: { url: { type: 'string' } } } })
+  @ApiBadRequestResponse({ description: 'Invalid file' })
+  @UseInterceptors(FileInterceptor('image', { storage: postImageStorage, fileFilter: imageFileFilter, limits: { fileSize: 5 * 1024 * 1024 } }))
+  uploadImage(@UploadedFile() file: Express.Multer.File): { url: string } {
+    if (!file) throw new BadRequestException('Image file is required');
+    return { url: `/uploads/post-images/${file.filename}` };
+  }
+
   @Get()
   @ApiOperation({ summary: 'Retrieve all posts' })
-  @ApiResponse({
-    status: 200,
-    description: 'A list of all posts.',
-    type: [PostSchema],
-  })
+  @ApiResponse({ status: 200, description: 'A list of all posts.', type: [PostSchema] })
   @ApiUnauthorizedResponse()
-  findAll(): Promise<PostDocument[]> {
-    return this.postsService.findAll();
+  findAll(@Request() req: { user: { id: string } }): Promise<Record<string, unknown>[]> {
+    return this.postsService.findAll(req.user.id);
   }
 
   @Get(':id')
   @ApiParam({ name: 'id', description: 'Post ID', type: String })
   @ApiOperation({ summary: 'Retrieve a single post by ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'The post with the specified ID.',
-    type: PostSchema,
-  })
+  @ApiResponse({ status: 200, description: 'The post with the specified ID.', type: PostSchema })
   @ApiProtectedReadResponses('Post')
   findOne(@Param('id') id: string): Promise<PostDocument> {
     return this.postsService.findOne(id);
@@ -86,11 +120,7 @@ export class PostsController {
   @UseGuards(PostOwnerGuard)
   @ApiOperation({ summary: 'Update a post' })
   @ApiBadRequestResponse({ description: 'Invalid payload (e.g., invalid plantId format)' })
-  @ApiResponse({
-    status: 200,
-    description: 'The post has been successfully updated.',
-    type: PostSchema,
-  })
+  @ApiResponse({ status: 200, description: 'The post has been successfully updated.', type: PostSchema })
   @ApiOwnershipResponses('Post')
   update(
     @Request() req: { user: { id: string }; post: PostDocument },
@@ -103,10 +133,7 @@ export class PostsController {
   @ApiParam({ name: 'id', description: 'Post ID', type: String })
   @UseGuards(PostOwnerGuard)
   @ApiOperation({ summary: 'Delete a post' })
-  @ApiResponse({
-    status: 200,
-    description: 'The post has been successfully deleted.',
-  })
+  @ApiResponse({ status: 200, description: 'The post has been successfully deleted.' })
   @ApiOwnershipResponses('Post')
   remove(@Request() req: { post: PostDocument }): Promise<{ deleted: boolean; id: string }> {
     return this.postsService.remove(req.post);

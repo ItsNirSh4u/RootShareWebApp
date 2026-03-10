@@ -27,7 +27,12 @@ export class LikesService {
         parentId: new Types.ObjectId(parentId),
         userId: new Types.ObjectId(userId),
       });
-      await newLike.save();
+      try {
+        await newLike.save();
+      } catch (e: unknown) {
+        if ((e as { code?: number })?.code === 11000) return { liked: true };
+        throw e;
+      }
       return { liked: true };
     }
   }

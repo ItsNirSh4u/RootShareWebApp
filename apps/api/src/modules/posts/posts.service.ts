@@ -31,14 +31,21 @@ export class PostsService {
     return newPost.save();
   }
 
-  async findAll(): Promise<PostDocument[]> {
-    return this.postModel
+  async findAll(userId: string): Promise<Record<string, unknown>[]> {
+    const posts = await this.postModel
       .find()
       .sort({ createdAt: -1 })
       .populate('userId', 'username profileImageUrl')
       .populate('likesCount')
       .populate('plantId')
+      .populate({ path: 'likes', match: { userId: new Types.ObjectId(userId) }, select: '_id' })
       .exec();
+
+    return posts.map((post) => {
+      const json = post.toJSON() as Record<string, unknown>;
+      const likes = json['likes'] as unknown[];
+      return { ...json, isLiked: Array.isArray(likes) && likes.length > 0, likes: undefined };
+    });
   }
 
   async findOne(id: string): Promise<PostDocument> {

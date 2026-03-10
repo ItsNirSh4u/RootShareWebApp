@@ -37,15 +37,22 @@ const POST_TYPE_BADGE: Record<PostType, { label: string; className: string }> = 
 interface PostCardProps {
   post: IPostWithDetails;
   onLike?: (postId: string) => void;
+  onClick?: (post: IPostWithDetails) => void;
 }
 
-export function PostCard({ post, onLike }: PostCardProps): JSX.Element {
+export function PostCard({ post, onLike, onClick }: PostCardProps): JSX.Element {
   const badge = POST_TYPE_BADGE[post.type];
   const avatarLetter = post.user.username.charAt(0).toUpperCase();
   const visibleImages = post.images.slice(0, 3);
 
   return (
-    <article className="bg-bg-card rounded-lg shadow-soft-md border border-border-default p-4 flex flex-col gap-3">
+    <article
+      className={cn(
+        'bg-bg-card rounded-lg shadow-soft-md border border-border-default p-4 flex flex-col gap-3',
+        onClick && 'cursor-pointer hover:border-primary/40 transition-colors',
+      )}
+      onClick={() => onClick?.(post)}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div
@@ -112,10 +119,10 @@ export function PostCard({ post, onLike }: PostCardProps): JSX.Element {
       <div className="flex items-center gap-5 pt-1 border-t border-border-muted">
         <button
           type="button"
-          onClick={() => onLike?.(post.id)}
+          onClick={(e) => { e.stopPropagation(); onLike?.(post.id); }}
           disabled={!onLike}
           className={cn(
-            'flex items-center gap-1.5 text-sm transition-colors',
+            'flex items-center gap-1.5 text-sm transition-all duration-150 active:scale-90',
             post.isLiked
               ? 'text-red-500'
               : 'text-text-muted hover:text-red-400',
@@ -126,7 +133,7 @@ export function PostCard({ post, onLike }: PostCardProps): JSX.Element {
         >
           <Heart
             size={16}
-            className={cn(post.isLiked && 'fill-red-500')}
+            className={cn('transition-all duration-200', post.isLiked && 'fill-red-500 scale-110')}
             aria-hidden
           />
           <span>{post.likesCount}</span>
