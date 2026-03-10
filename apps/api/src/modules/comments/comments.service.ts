@@ -49,7 +49,12 @@ export class CommentsService {
     }
 
     return this.commentModel
-      .find({ postId: new Types.ObjectId(postId) })
+      .find({
+        $or: [
+          { postId: new Types.ObjectId(postId) },
+          { $expr: { $eq: [{ $toString: '$postId' }, postId] } },
+        ],
+      })
       .populate('userId', 'username profileImageUrl')
       .populate('likesCount')
       .sort({ createdAt: 'asc' })

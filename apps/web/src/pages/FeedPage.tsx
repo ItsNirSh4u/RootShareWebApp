@@ -2,9 +2,11 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Leaf } from 'lucide-react';
 import { PostType } from '@rootshare/shared-types';
+import type { IPostWithDetails } from '@rootshare/shared-types';
 import { ErrorAlert } from '@/components/ui';
-import { FeaturedPlantsCarousel, FeedFilters, PostCard } from '@/components/feed';
+import { FeaturedPlantsCarousel, FeedFilters, PostCard, PostModal } from '@/components/feed';
 import { fetchPosts, fetchFeaturedPlants, toggleLikePost } from '@/pages/Feed/feed';
+import { useAuthStore } from '@/stores/auth.store';
 
 type ActiveType = PostType | 'all';
 
@@ -23,9 +25,11 @@ function EmptyState(): JSX.Element {
 
 export function FeedPage(): JSX.Element {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
 
   const [activeType, setActiveType] = useState<ActiveType>('all');
   const [search, setSearch] = useState('');
+  const [selectedPost, setSelectedPost] = useState<IPostWithDetails | null>(null);
 
   const {
     data: posts,
@@ -42,8 +46,30 @@ export function FeedPage(): JSX.Element {
   });
 
   const likeMutation = useMutation({
-    mutationFn: toggleLikePost,
-    onSuccess: () => {
+    mutationFn: (id: string) => toggleLikePost(id),
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ['posts'] });
+      const snapshot = queryClient.getQueryData<IPostWithDetails[]>(['posts']);
+      queryClient.setQueryData<IPostWithDetails[]>(['posts'], (old) =>
+        old?.map((p) =>
+          p.id === id
+            ? { ...p, isLiked: !p.isLiked, likesCount: p.likesCount + (p.isLiked ? -1 : 1) }
+            : p,
+        ),
+      );
+      return { snapshot };
+    },
+    onSuccess: ({ liked }, id) => {
+      queryClient.setQueryData<IPostWithDetails[]>(['posts'], (old) =>
+        old?.map((p) => (p.id === id ? { ...p, isLiked: liked } : p)),
+      );
+    },
+    onError: (_err, _id, context) => {
+      if (context?.snapshot) {
+        queryClient.setQueryData(['posts'], context.snapshot);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
   });
@@ -69,6 +95,10 @@ export function FeedPage(): JSX.Element {
     return result;
   }, [posts, activeType, search]);
 
+  function handlePostMutationSuccess() {
+    queryClient.invalidateQueries({ queryKey: ['posts'] });
+  }
+
   return (
     <div className="min-h-full bg-bg-main">
       <div className="max-w-screen-2xl mx-auto px-4 lg:px-6 py-6">
@@ -78,10 +108,7 @@ export function FeedPage(): JSX.Element {
         </header>
 
         <div className="flex flex-col gap-5">
-          <FeaturedPlantsCarousel
-            plants={featuredPlants ?? []}
-            isLoading={plantsLoading}
-          />
+          <FeaturedPlantsCarousel plants={featuredPlants ?? []} isLoading={plantsLoading} />
 
           <FeedFilters
             activeType={activeType}
@@ -107,12 +134,27 @@ export function FeedPage(): JSX.Element {
               </div>
             ) : (
               filteredPosts.map((post) => (
-                <PostCard key={post.id} post={post} onLike={(id) => likeMutation.mutate(id)} />
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  onLike={(id) => likeMutation.mutate(id)}
+                  onClick={setSelectedPost}
+                />
               ))
             )}
           </section>
         </div>
       </div>
+
+      {selectedPost && user && (
+        <PostModal
+          mode="view"
+          post={selectedPost}
+          currentUserId={user.id}
+          onClose={() => setSelectedPost(null)}
+          onSuccess={handlePostMutationSuccess}
+        />
+      )}
     </div>
   );
 }
