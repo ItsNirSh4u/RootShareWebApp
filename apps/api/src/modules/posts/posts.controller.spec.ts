@@ -78,7 +78,7 @@ describe('PostsController', () => {
       const mockPosts = [mockPost, { ...mockPost, _id: new Types.ObjectId() }];
       postsService.findAll.mockResolvedValue(mockPosts as any);
 
-      const result = await controller.findAll();
+      const result = await controller.findAll({ user: { id: mockUserId } });
 
       expect(postsService.findAll).toHaveBeenCalled();
       expect(result).toEqual(mockPosts);
