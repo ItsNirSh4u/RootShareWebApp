@@ -65,7 +65,6 @@ export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: Pos
   const [imageUploading, setImageUploading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [commentText, setCommentText] = useState('');
-
   const isFormMode = mode === 'create' || editing;
 
   const {
@@ -284,7 +283,7 @@ export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: Pos
                 <button
                   type="button"
                   onClick={() => imageInputRef.current?.click()}
-                  disabled={imageUploading || images.length >= 3}
+                  disabled={imageUploading || images.length >= 10}
                   className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text-base transition-colors disabled:opacity-40"
                 >
                   {imageUploading ? <Spinner size="sm" /> : <ImagePlus size={16} />}

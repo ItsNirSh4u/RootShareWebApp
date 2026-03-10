@@ -43,7 +43,9 @@ interface PostCardProps {
 export function PostCard({ post, onLike, onClick }: PostCardProps): JSX.Element {
   const badge = POST_TYPE_BADGE[post.type];
   const avatarLetter = post.user.username.charAt(0).toUpperCase();
-  const visibleImages = post.images.slice(0, 3);
+  const totalImages = post.images.length;
+  const hasOverflow = totalImages > 4;
+  const visibleImages = post.images.slice(0, hasOverflow ? 4 : totalImages);
 
   return (
     <article
@@ -94,29 +96,52 @@ export function PostCard({ post, onLike, onClick }: PostCardProps): JSX.Element 
 
       <p className="text-sm text-text-base leading-relaxed line-clamp-4">{post.content}</p>
 
-      {visibleImages.length > 0 && (
-        <div
-          className={cn(
-            'grid gap-2 rounded-md overflow-hidden',
-            visibleImages.length === 1 && 'grid-cols-1',
-            visibleImages.length === 2 && 'grid-cols-2',
-            visibleImages.length >= 3 && 'grid-cols-3',
-          )}
-        >
-          {visibleImages.map((src, idx) => (
-            <div key={idx} className="aspect-square bg-bg-subtle">
-              <img
-                src={src}
-                alt={`Post image ${idx + 1}`}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-            </div>
-          ))}
+      {visibleImages.length === 1 && (
+        <div className="rounded-md overflow-hidden aspect-video bg-bg-subtle">
+          <img
+            src={visibleImages[0]}
+            alt="Post image 1"
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
         </div>
       )}
 
-      <div className="flex items-center gap-5 pt-1 border-t border-border-muted">
+      {visibleImages.length >= 2 && (
+        <div
+          className={cn(
+            'grid gap-1 rounded-md overflow-hidden',
+            visibleImages.length === 3 ? 'grid-cols-4' : 'grid-cols-2',
+          )}
+        >
+          {visibleImages.map((src, idx) => {
+            const isOverflowTile = hasOverflow && idx === 3;
+            const colClass =
+              visibleImages.length === 3
+                ? idx === 2
+                  ? 'col-start-2 col-span-2'
+                  : 'col-span-2'
+                : '';
+            return (
+              <div key={idx} className={cn('relative aspect-square bg-bg-subtle', colClass)}>
+                <img
+                  src={src}
+                  alt={`Post image ${idx + 1}`}
+                  className={cn('w-full h-full object-cover', isOverflowTile && 'blur-[1px]')}
+                  loading="lazy"
+                />
+                {isOverflowTile && (
+                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                    <span className="text-white font-bold text-xl">+{totalImages - 3}</span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="mt-auto flex items-center gap-5 pt-1 border-t border-border-muted">
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onLike?.(post.id); }}
