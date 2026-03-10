@@ -7,9 +7,11 @@ export async function fetchUserPosts(userId: string): Promise<IPostWithDetails[]
   return response.data.map(mapPost).filter((post) => post.user.id === userId);
 }
 
+type RawPlant = Omit<IPlant, 'id'> & { _id: string };
+
 export async function fetchUserPlants(): Promise<IPlant[]> {
-  const response = await api.get<IPlant[]>('/plants');
-  return response.data;
+  const response = await api.get<RawPlant[]>('/plants');
+  return response.data.map((p) => ({ ...p, id: p._id }));
 }
 
 export async function updateProfile(data: IUserUpdate): Promise<IUser> {
