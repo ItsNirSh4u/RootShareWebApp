@@ -4,7 +4,7 @@ import {
   Sprout, Plus, Pencil, Trash2, X, Search, FileImage,
   MessageCircle, Leaf, ArrowLeft, ExternalLink,
 } from 'lucide-react';
-import type { IPlantWithStats, IPostWithDetails, IPlantCreate, IPlantUpdate } from '@rootshare/shared-types';
+import type { IPlantWithStats, IPostWithDetails, IPlantCreate } from '@rootshare/shared-types';
 import { PlantStatus } from '@rootshare/shared-types';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
