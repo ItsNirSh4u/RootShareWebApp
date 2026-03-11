@@ -15,6 +15,7 @@ import { PlantStatus } from '@rootshare/shared-types';
 export class PlantsService {
   constructor(
     @InjectModel(Plant.name) private plantModel: Model<PlantDocument>,
+    @InjectModel('Post') private postModel: Model<Record<string, unknown>>,
     private readonly speciesService: SpeciesService,
   ) {}
 
@@ -62,6 +63,40 @@ export class PlantsService {
       .sort({ createdAt: -1 })
       .limit(limit)
       .exec();
+  }
+
+  async findAllWithStats(userId: string): Promise<Record<string, unknown>[]> {
+    const plants = await this.plantModel
+      .find({ userId: new Types.ObjectId(userId) })
+      .sort({ createdAt: -1 })
+      .exec();
+
+    if (plants.length === 0) return [];
+
+    const plantIds = plants.map((p) => p._id);
+
+    const stats = await this.postModel.aggregate([
+      { $match: { plantId: { $in: plantIds } } },
+      {
+        $group: {
+          _id: '$plantId',
+          postsCount: { $sum: 1 },
+          commentsCount: { $sum: '$commentsCount' },
+        },
+      },
+    ]);
+
+    const statsMap = new Map(
+      stats.map((s) => [
+        s._id.toString(),
+        { postsCount: s.postsCount, commentsCount: s.commentsCount },
+      ]),
+    );
+
+    return plants.map((plant) => {
+      const plantStats = statsMap.get(plant._id.toString()) ?? { postsCount: 0, commentsCount: 0 };
+      return { ...plant.toObject(), id: plant._id.toString(), ...plantStats };
+    });
   }
 
   async findOne(id: string): Promise<PlantDocument> {

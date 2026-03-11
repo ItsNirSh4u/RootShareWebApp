@@ -31,9 +31,12 @@ export class PostsService {
     return newPost.save();
   }
 
-  async findAll(userId: string): Promise<Record<string, unknown>[]> {
+  async findAll(userId: string, plantId?: string): Promise<Record<string, unknown>[]> {
+    const filter: Record<string, unknown> = {};
+    if (plantId) filter.plantId = new Types.ObjectId(plantId);
+
     const posts = await this.postModel
-      .find()
+      .find(filter)
       .sort({ createdAt: -1 })
       .populate('userId', 'username profileImageUrl')
       .populate('likesCount')

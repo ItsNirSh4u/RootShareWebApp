@@ -5,10 +5,14 @@ import { PlantsController } from './plants.controller';
 import { Plant, PlantSchema } from './schemas/plant.schema';
 import { PlantOwnerGuard } from './guards/plant-owner.guard';
 import { SpeciesModule } from '../species/species.module';
+import { Post, PostSchema } from '../posts/schemas/post.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Plant.name, schema: PlantSchema }]),
+    MongooseModule.forFeature([
+      { name: Plant.name, schema: PlantSchema },
+      { name: Post.name, schema: PostSchema },
+    ]),
     SpeciesModule,
   ],
   controllers: [PlantsController],
