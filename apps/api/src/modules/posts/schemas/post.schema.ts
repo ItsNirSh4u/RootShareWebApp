@@ -22,6 +22,9 @@ export class Post {
   @Prop({ type: [String], default: [] })
   images: string[];
 
+  @Prop({ type: String, default: null })
+  location?: string;
+
   @Prop({ default: 0 })
   commentsCount: number;
 

@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Request,
+  Query,
   UseInterceptors,
   UploadedFile,
   BadRequestException,
@@ -18,6 +19,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiParam,
+  ApiQuery,
   ApiBadRequestResponse,
   ApiNotFoundResponse,
   ApiForbiddenResponse,
@@ -100,10 +102,14 @@ export class PostsController {
 
   @Get()
   @ApiOperation({ summary: 'Retrieve all posts' })
+  @ApiQuery({ name: 'plantId', required: false, type: String, description: 'Filter posts by plant ID' })
   @ApiResponse({ status: 200, description: 'A list of all posts.', type: [PostSchema] })
   @ApiUnauthorizedResponse()
-  findAll(@Request() req: { user: { id: string } }): Promise<Record<string, unknown>[]> {
-    return this.postsService.findAll(req.user.id);
+  findAll(
+    @Request() req: { user: { id: string } },
+    @Query('plantId') plantId?: string,
+  ): Promise<Record<string, unknown>[]> {
+    return this.postsService.findAll(req.user.id, plantId);
   }
 
   @Get(':id')

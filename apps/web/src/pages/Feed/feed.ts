@@ -50,6 +50,8 @@ export async function toggleLikePost(postId: string): Promise<{ liked: boolean }
 
 export async function createPost(data: IPostCreate): Promise<IPostWithDetails> {
   const response = await api.post<RawPost>('/posts', data);
+  console.log({ data });
+
   return mapPost(response.data);
 }
 

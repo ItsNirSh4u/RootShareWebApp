@@ -11,7 +11,7 @@ export class PostsService {
   constructor(
     @InjectModel(Post.name) private postModel: Model<PostDocument>,
     private plantsService: PlantsService,
-  ) {}
+  ) { }
 
   async create(
     userId: string,
@@ -26,14 +26,18 @@ export class PostsService {
 
     const newPost = new this.postModel({
       ...createPostDto,
+      plantId: new Types.ObjectId(createPostDto.plantId),
       userId: new Types.ObjectId(userId),
     });
     return newPost.save();
   }
 
-  async findAll(userId: string): Promise<Record<string, unknown>[]> {
+  async findAll(userId: string, plantId?: string): Promise<Record<string, unknown>[]> {
+    const filter: Record<string, unknown> = {};
+    if (plantId) filter.plantId = new Types.ObjectId(plantId);
+
     const posts = await this.postModel
-      .find()
+      .find(filter)
       .sort({ createdAt: -1 })
       .populate('userId', 'username profileImageUrl')
       .populate('likesCount')
@@ -42,6 +46,7 @@ export class PostsService {
       .exec();
 
     return posts.map((post) => {
+      console.log("test", { post })
       const json = post.toJSON() as Record<string, unknown>;
       const likes = json['likes'] as unknown[];
       return { ...json, isLiked: Array.isArray(likes) && likes.length > 0, likes: undefined };

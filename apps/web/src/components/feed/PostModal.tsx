@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { X, Trash2, Pencil, Heart, MessageCircle, ImagePlus, XCircle } from 'lucide-react';
+import { X, Trash2, Pencil, Heart, MessageCircle, ImagePlus, XCircle, MapPin } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { IPostWithDetails } from '@rootshare/shared-types';
 import { PostType } from '@rootshare/shared-types';
@@ -60,12 +60,14 @@ export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: Pos
   const [editing, setEditing] = useState(false);
   const [typeValue, setTypeValue] = useState<PostType>(post?.type ?? PostType.UPDATE);
   const [contentValue, setContentValue] = useState(post?.content ?? '');
+  const [locationValue, setLocationValue] = useState(post?.location ?? '');
   const [plantId, setPlantId] = useState(post?.plant?.id ?? '');
   const [images, setImages] = useState<string[]>(post?.images ?? []);
   const [imageUploading, setImageUploading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [commentText, setCommentText] = useState('');
   const isFormMode = mode === 'create' || editing;
+  const needsLocation = typeValue === PostType.SWAP || typeValue === PostType.GIVEAWAY;
 
   const {
     data: comments,
@@ -108,16 +110,32 @@ export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: Pos
 
   const createMutation = useMutation({
     mutationFn: () =>
-      createPost({ type: typeValue, content: contentValue, images, plantId: plantId || undefined }),
+      createPost({
+        type: typeValue,
+        content: contentValue,
+        images,
+        plantId: plantId || undefined,
+        location: needsLocation && locationValue.trim() ? locationValue.trim() : undefined,
+      }),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: ['profile', 'posts'] });
+      queryClient.invalidateQueries({ queryKey: ['garden'] });
       onSuccess();
       onClose();
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: () => updatePost(post!.id, { type: typeValue, content: contentValue, images }),
+    mutationFn: () =>
+      updatePost(post!.id, {
+        type: typeValue,
+        content: contentValue,
+        images,
+        location: needsLocation && locationValue.trim() ? locationValue.trim() : undefined,
+      }),
     onSuccess: (updated) => {
+      queryClient.invalidateQueries({ queryKey: ['garden'] });
       setCurrentPost((prev) => ({ ...prev!, ...updated, user: prev!.user, isLiked: prev?.isLiked }));
       onSuccess();
       setEditing(false);
@@ -127,6 +145,7 @@ export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: Pos
   const deleteMutation = useMutation({
     mutationFn: () => deletePost(post!.id),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['garden'] });
       onSuccess();
       onClose();
     },
@@ -143,6 +162,9 @@ export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: Pos
           p.id === currentPost?.id ? { ...p, commentsCount: p.commentsCount + 1 } : p,
         ),
       );
+      if (currentPost?.plant) {
+        queryClient.invalidateQueries({ queryKey: ['garden'] });
+      }
     },
   });
 
@@ -176,6 +198,7 @@ export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: Pos
     setEditing(false);
     setTypeValue(currentPost?.type ?? PostType.UPDATE);
     setContentValue(currentPost?.content ?? '');
+    setLocationValue(currentPost?.location ?? '');
     setPlantId(currentPost?.plant?.id ?? '');
     setImages(currentPost?.images ?? []);
   }
@@ -188,6 +211,7 @@ export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: Pos
   function openEdit() {
     setTypeValue(currentPost!.type);
     setContentValue(currentPost!.content);
+    setLocationValue(currentPost?.location ?? '');
     setPlantId(currentPost?.plant?.id ?? '');
     setImages(currentPost!.images);
     setEditing(true);
@@ -260,6 +284,18 @@ export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: Pos
                 className="w-full text-sm border border-border-default rounded-lg px-3 py-2 bg-bg-main text-text-base resize-none focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-text-muted"
                 autoFocus
               />
+
+              {needsLocation && (
+                <div className="relative">
+                  <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" aria-hidden />
+                  <input
+                    value={locationValue}
+                    onChange={(e) => setLocationValue(e.target.value)}
+                    placeholder="Location (city, neighborhood…)"
+                    className="w-full text-sm border border-border-default rounded-lg pl-8 pr-3 py-2 bg-bg-main text-text-base focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-text-muted"
+                  />
+                </div>
+              )}
 
               {images.length > 0 && (
                 <div className="flex flex-wrap gap-2">
@@ -351,6 +387,13 @@ export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: Pos
                 <span className="inline-block text-xs text-text-muted bg-bg-subtle border border-border-muted px-2.5 py-0.5 rounded-full self-start">
                   {currentPost.plant.name}
                   {currentPost.plant.species && <span> · {currentPost.plant.species}</span>}
+                </span>
+              )}
+
+              {currentPost.location && (
+                <span className="inline-flex items-center gap-1 text-xs text-orange-600 bg-orange-50 border border-orange-200 px-2.5 py-0.5 rounded-full self-start">
+                  <MapPin size={11} aria-hidden />
+                  {currentPost.location}
                 </span>
               )}
 
