@@ -7,6 +7,7 @@ export interface IPost {
   type: PostType;
   content: string;
   images: string[];
+  location?: string;
   likesCount: number;
   commentsCount: number;
   createdAt: Date;
@@ -18,12 +19,14 @@ export interface IPostCreate {
   type: PostType;
   content: string;
   images: string[];
+  location?: string;
 }
 
 export interface IPostUpdate {
   content?: string;
   images?: string[];
   type?: PostType;
+  location?: string;
 }
 
 export interface IPostWithDetails extends IPost {

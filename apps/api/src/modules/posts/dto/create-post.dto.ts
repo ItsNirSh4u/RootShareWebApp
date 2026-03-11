@@ -40,4 +40,12 @@ export class CreatePostDto {
   @IsArray()
   @IsString({ each: true })
   images?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Location for swap or giveaway posts',
+    example: 'Tel Aviv, Israel',
+  })
+  @IsOptional()
+  @IsString()
+  location?: string;
 }

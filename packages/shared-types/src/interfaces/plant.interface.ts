@@ -23,3 +23,8 @@ export interface IPlantUpdate {
   status?: PlantStatus;
   imageUrl?: string;
 }
+
+export interface IPlantWithStats extends IPlant {
+  postsCount: number;
+  commentsCount: number;
+}

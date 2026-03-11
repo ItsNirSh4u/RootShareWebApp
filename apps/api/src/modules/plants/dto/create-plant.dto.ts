@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsUrl } from 'class-validator';
+import { IsString, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreatePlantDto {
@@ -20,9 +20,9 @@ export class CreatePlantDto {
 
   @ApiProperty({
     description: 'URL to the plant image',
-    example: 'https://example.com/my-plant.jpg',
+    example: '/uploads/plant-images/my-plant.jpg',
   })
-  @IsUrl()
+  @IsString()
   @IsNotEmpty()
   imageUrl: string;
 }
