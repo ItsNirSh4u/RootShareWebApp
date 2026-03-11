@@ -490,6 +490,10 @@ export function InventoryPage(): JSX.Element {
     setDeletingPlant(plant);
   }
 
+  const livePlant = selectedPlant && plants
+    ? (plants.find((p) => p.id === selectedPlant.id) ?? selectedPlant)
+    : null;
+
   if (!user) return <div />;
 
   return (
@@ -601,9 +605,9 @@ export function InventoryPage(): JSX.Element {
         )}
       </main>
 
-      {selectedPlant && (
+      {livePlant && (
         <PlantDetailPanel
-          plant={selectedPlant}
+          plant={livePlant}
           currentUserId={user.id}
           onClose={() => setSelectedPlant(null)}
           onEdit={handleEdit}
