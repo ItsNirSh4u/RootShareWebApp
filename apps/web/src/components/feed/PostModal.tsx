@@ -118,6 +118,7 @@ export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: Pos
         location: needsLocation && locationValue.trim() ? locationValue.trim() : undefined,
       }),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['garden'] });
       onSuccess();
       onClose();
     },
@@ -132,6 +133,7 @@ export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: Pos
         location: needsLocation && locationValue.trim() ? locationValue.trim() : undefined,
       }),
     onSuccess: (updated) => {
+      queryClient.invalidateQueries({ queryKey: ['garden'] });
       setCurrentPost((prev) => ({ ...prev!, ...updated, user: prev!.user, isLiked: prev?.isLiked }));
       onSuccess();
       setEditing(false);
@@ -141,6 +143,7 @@ export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: Pos
   const deleteMutation = useMutation({
     mutationFn: () => deletePost(post!.id),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['garden'] });
       onSuccess();
       onClose();
     },
