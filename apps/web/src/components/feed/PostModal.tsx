@@ -118,6 +118,8 @@ export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: Pos
         location: needsLocation && locationValue.trim() ? locationValue.trim() : undefined,
       }),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: ['profile', 'posts'] });
       queryClient.invalidateQueries({ queryKey: ['garden'] });
       onSuccess();
       onClose();
@@ -160,6 +162,9 @@ export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: Pos
           p.id === currentPost?.id ? { ...p, commentsCount: p.commentsCount + 1 } : p,
         ),
       );
+      if (currentPost?.plant) {
+        queryClient.invalidateQueries({ queryKey: ['garden'] });
+      }
     },
   });
 
