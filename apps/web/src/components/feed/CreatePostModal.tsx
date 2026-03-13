@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { X } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { X, ImagePlus, XCircle } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { PostType } from '@rootshare/shared-types';
 import type { IPostCreate } from '@rootshare/shared-types';
 import { Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
-import { fetchUserPlants, createPost } from '@/pages/Feed/feed';
+import { fetchUserPlants, createPost, uploadPostImage } from '@/pages/Feed/feed';
 
 const TYPE_OPTIONS: { value: PostType; label: string; activeClass: string }[] = [
   { value: PostType.UPDATE, label: 'Update', activeClass: 'bg-primary/10 text-primary border-primary/30' },
@@ -29,7 +29,10 @@ export function CreatePostModal({ isOpen, onClose, onSuccess }: CreatePostModalP
   const [content, setContent] = useState('');
   const [type, setType] = useState<PostType | ''>('');
   const [plantId, setPlantId] = useState('');
+  const [images, setImages] = useState<string[]>([]);
+  const [imageUploading, setImageUploading] = useState(false);
   const [errors, setErrors] = useState<{ content?: string; type?: string }>({});
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const { data: plants } = useQuery({
     queryKey: ['plants', 'user'],
@@ -49,8 +52,22 @@ export function CreatePostModal({ isOpen, onClose, onSuccess }: CreatePostModalP
     setContent('');
     setType('');
     setPlantId('');
+    setImages([]);
     setErrors({});
     onClose();
+  };
+
+  const handleImagePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    setImageUploading(true);
+    try {
+      const url = await uploadPostImage(file);
+      setImages((prev) => [...prev, url]);
+    } finally {
+      setImageUploading(false);
+    }
   };
 
   const validate = (): boolean => {
@@ -64,7 +81,7 @@ export function CreatePostModal({ isOpen, onClose, onSuccess }: CreatePostModalP
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate() || !type) return;
-    const dto: IPostCreate = { content: content.trim(), type, images: [] };
+    const dto: IPostCreate = { content: content.trim(), type, images };
     if (plantId) dto.plantId = plantId;
     mutation.mutate(dto);
   };
@@ -153,6 +170,43 @@ export function CreatePostModal({ isOpen, onClose, onSuccess }: CreatePostModalP
             </div>
           )}
 
+          {images.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {images.map((src, idx) => (
+                <div key={idx} className="relative w-20 h-20 rounded-md overflow-hidden group">
+                  <img src={src} alt="" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setImages((prev) => prev.filter((_, i) => i !== idx))}
+                    className="absolute top-0.5 right-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label="Remove image"
+                  >
+                    <XCircle size={18} className="text-white drop-shadow" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => imageInputRef.current?.click()}
+              disabled={imageUploading || images.length >= 10}
+              className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text-base transition-colors disabled:opacity-40"
+            >
+              <ImagePlus size={16} />
+              <span>{imageUploading ? 'Uploading…' : 'Add photo'}</span>
+            </button>
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImagePick}
+            />
+          </div>
+
           {mutation.isError && (
             <p className="text-sm text-destructive">Failed to create post. Please try again.</p>
           )}
@@ -161,7 +215,7 @@ export function CreatePostModal({ isOpen, onClose, onSuccess }: CreatePostModalP
             <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
               Cancel
             </Button>
-            <Button type="submit" className="flex-1" isLoading={mutation.isPending}>
+            <Button type="submit" className="flex-1" isLoading={mutation.isPending} disabled={imageUploading}>
               Post
             </Button>
           </div>

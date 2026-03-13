@@ -101,6 +101,14 @@ export async function addComment(postId: string, content: string): Promise<void>
   await api.post('/comments', { postId, content });
 }
 
+export async function deleteComment(commentId: string): Promise<void> {
+  await api.delete(`/comments/${commentId}`);
+}
+
+export async function updateComment(commentId: string, content: string): Promise<void> {
+  await api.patch('/comments', { commentId, content });
+}
+
 export async function uploadPostImage(file: File): Promise<string> {
   const formData = new FormData();
   formData.append('image', file);

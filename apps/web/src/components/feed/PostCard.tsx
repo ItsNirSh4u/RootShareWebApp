@@ -164,10 +164,19 @@ export function PostCard({ post, onLike, onClick }: PostCardProps): JSX.Element 
           <span>{post.likesCount}</span>
         </button>
 
-        <div className="flex items-center gap-1.5 text-sm text-text-muted">
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onClick?.(post); }}
+          disabled={!onClick}
+          className={cn(
+            'flex items-center gap-1.5 text-sm text-text-muted transition-colors',
+            onClick ? 'hover:text-primary cursor-pointer' : 'cursor-default',
+          )}
+          aria-label="View comments"
+        >
           <MessageCircle size={16} aria-hidden />
           <span>{post.commentsCount}</span>
-        </div>
+        </button>
       </div>
     </article>
   );

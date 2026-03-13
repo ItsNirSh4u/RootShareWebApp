@@ -14,6 +14,8 @@ import {
   toggleLikePost,
   fetchComments,
   addComment,
+  deleteComment,
+  updateComment,
   uploadPostImage,
 } from '@/pages/Feed/feed';
 import { fetchUserPlants } from '@/pages/Profile/profile';
@@ -66,6 +68,8 @@ export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: Pos
   const [imageUploading, setImageUploading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [commentText, setCommentText] = useState('');
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState('');
   const isFormMode = mode === 'create' || editing;
   const needsLocation = typeValue === PostType.SWAP || typeValue === PostType.GIVEAWAY;
 
@@ -165,6 +169,38 @@ export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: Pos
       if (currentPost?.plant) {
         queryClient.invalidateQueries({ queryKey: ['garden'] });
       }
+    },
+  });
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: (commentId: string) => deleteComment(commentId),
+    onMutate: (commentId) => {
+      queryClient.setQueryData<import('@rootshare/shared-types').ICommentWithUser[]>(
+        ['comments', currentPost?.id],
+        (old) => old?.filter((c) => c.id !== commentId) ?? [],
+      );
+      setCurrentPost((prev) =>
+        prev ? { ...prev, commentsCount: Math.max(0, prev.commentsCount - 1) } : null,
+      );
+    },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: ['comments', currentPost?.id] });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+    },
+  });
+
+  const updateCommentMutation = useMutation({
+    mutationFn: ({ commentId, content }: { commentId: string; content: string }) =>
+      updateComment(commentId, content),
+    onSuccess: (_data, { commentId, content }) => {
+      queryClient.setQueryData<import('@rootshare/shared-types').ICommentWithUser[]>(
+        ['comments', currentPost?.id],
+        (old) => old?.map((c) => (c.id === commentId ? { ...c, content } : c)) ?? [],
+      );
+      setEditingCommentId(null);
+      setEditingContent('');
     },
   });
 
@@ -498,24 +534,100 @@ export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: Pos
                   </div>
                 ) : comments && comments.length > 0 ? (
                   <div className="flex flex-col gap-3">
-                    {comments.map((comment) => (
-                      <div key={comment.id} className="flex gap-2.5">
-                        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center text-primary text-xs font-semibold select-none">
-                          {comment.user.username.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-baseline gap-1.5 flex-wrap">
-                            <span className="text-xs font-semibold text-text-base">
-                              {comment.user.username}
-                            </span>
-                            <span className="text-xs text-text-muted">
-                              {formatRelativeTime(comment.createdAt)}
-                            </span>
+                    {comments.map((comment) => {
+                      const isCommentOwner = comment.user.id === currentUserId;
+                      const canDelete = isCommentOwner || currentPost?.user.id === currentUserId;
+                      const isEditingThis = editingCommentId === comment.id;
+                      return (
+                        <div key={comment.id} className="flex gap-2.5 group">
+                          <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center text-primary text-xs font-semibold select-none">
+                            {comment.user.username.charAt(0).toUpperCase()}
                           </div>
-                          <p className="text-sm text-text-base leading-snug">{comment.content}</p>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-baseline gap-1.5 flex-wrap">
+                              <span className="text-xs font-semibold text-text-base">
+                                {comment.user.username}
+                              </span>
+                              <span className="text-xs text-text-muted">
+                                {formatRelativeTime(comment.createdAt)}
+                              </span>
+                            </div>
+                            {isEditingThis ? (
+                              <div className="flex flex-col gap-1.5 mt-1">
+                                <textarea
+                                  value={editingContent}
+                                  onChange={(e) => setEditingContent(e.target.value)}
+                                  rows={2}
+                                  autoFocus
+                                  className="w-full text-sm border border-border-default rounded-lg px-3 py-1.5 bg-bg-main text-text-base resize-none focus:outline-none focus:ring-1 focus:ring-primary"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                      e.preventDefault();
+                                      if (editingContent.trim()) {
+                                        updateCommentMutation.mutate({ commentId: comment.id, content: editingContent.trim() });
+                                      }
+                                    }
+                                    if (e.key === 'Escape') {
+                                      setEditingCommentId(null);
+                                      setEditingContent('');
+                                    }
+                                  }}
+                                />
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => {
+                                      if (editingContent.trim()) {
+                                        updateCommentMutation.mutate({ commentId: comment.id, content: editingContent.trim() });
+                                      }
+                                    }}
+                                    isLoading={updateCommentMutation.isPending}
+                                    disabled={!editingContent.trim()}
+                                  >
+                                    Save
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => { setEditingCommentId(null); setEditingContent(''); }}
+                                    disabled={updateCommentMutation.isPending}
+                                  >
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-sm text-text-base leading-snug">{comment.content}</p>
+                            )}
+                          </div>
+                          {!isEditingThis && (
+                            <div className="flex-shrink-0 flex gap-1 self-start mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                              {isCommentOwner && (
+                                <button
+                                  type="button"
+                                  onClick={() => { setEditingCommentId(comment.id); setEditingContent(comment.content); }}
+                                  className="text-text-muted hover:text-primary transition-colors"
+                                  aria-label="Edit comment"
+                                >
+                                  <Pencil size={13} />
+                                </button>
+                              )}
+                              {canDelete && (
+                                <button
+                                  type="button"
+                                  onClick={() => deleteCommentMutation.mutate(comment.id)}
+                                  disabled={deleteCommentMutation.isPending}
+                                  className="text-text-muted hover:text-destructive transition-colors"
+                                  aria-label="Delete comment"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : commentsError ? (
                   <ErrorAlert message="Failed to load comments" />

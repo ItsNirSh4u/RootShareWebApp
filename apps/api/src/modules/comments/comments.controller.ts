@@ -25,6 +25,7 @@ import {
   CommentDocument,
 } from './schemas/comment.schema';
 import { CommentOwnerGuard } from './guards/comment-owner.guard';
+import { CommentDeleteGuard } from './guards/comment-delete.guard';
 
 @ApiTags('comments')
 @Controller('comments')
@@ -81,7 +82,7 @@ export class CommentsController {
   }
 
   @Delete(':id')
-  @UseGuards(CommentOwnerGuard)
+  @UseGuards(CommentDeleteGuard)
   @ApiOperation({ summary: 'Delete a comment' })
   @ApiParam({ name: 'id', type: 'string' })
   @ApiResponse({
