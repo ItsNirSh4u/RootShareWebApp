@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Leaf } from 'lucide-react';
+import { Leaf, Plus } from 'lucide-react';
 import { PostType } from '@rootshare/shared-types';
 import type { IPostWithDetails } from '@rootshare/shared-types';
 import { ErrorAlert } from '@/components/ui';
-import { FeaturedPlantsCarousel, FeedFilters, PostCard, PostModal } from '@/components/feed';
+import { FeaturedPlantsCarousel, FeedFilters, PostCard, PostModal, CreatePostModal } from '@/components/feed';
 import { fetchPosts, fetchFeaturedPlants, toggleLikePost } from '@/pages/Feed/feed';
 import { useAuthStore } from '@/stores/auth.store';
 
@@ -30,6 +30,7 @@ export function FeedPage(): JSX.Element {
   const [activeType, setActiveType] = useState<ActiveType>('all');
   const [search, setSearch] = useState('');
   const [selectedPost, setSelectedPost] = useState<IPostWithDetails | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const {
     data: posts,
@@ -100,7 +101,7 @@ export function FeedPage(): JSX.Element {
   }
 
   return (
-    <div className="min-h-full bg-bg-main">
+    <div className="relative min-h-full bg-bg-main">
       <div className="max-w-screen-2xl mx-auto px-4 lg:px-6 py-6">
         <header className="flex items-center gap-2.5 mb-6">
           <Leaf size={26} className="text-primary" aria-hidden />
@@ -155,6 +156,21 @@ export function FeedPage(): JSX.Element {
           onSuccess={handlePostMutationSuccess}
         />
       )}
+
+      <button
+        type="button"
+        onClick={() => setIsCreateOpen(true)}
+        className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-soft-lg flex items-center justify-center hover:bg-primary-hover transition-colors z-40"
+        aria-label="Create post"
+      >
+        <Plus size={24} />
+      </button>
+
+      <CreatePostModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onSuccess={handlePostMutationSuccess}
+      />
     </div>
   );
 }

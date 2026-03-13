@@ -43,6 +43,11 @@ export async function fetchFeaturedPlants(): Promise<IPlant[]> {
   return response.data;
 }
 
+export async function fetchUserPlants(): Promise<IPlant[]> {
+  const response = await api.get<IPlant[]>('/plants');
+  return response.data;
+}
+
 export async function toggleLikePost(postId: string): Promise<{ liked: boolean }> {
   const response = await api.post<{ liked: boolean }>(`/likes/posts/${postId}/toggle`);
   return response.data;
@@ -50,8 +55,6 @@ export async function toggleLikePost(postId: string): Promise<{ liked: boolean }
 
 export async function createPost(data: IPostCreate): Promise<IPostWithDetails> {
   const response = await api.post<RawPost>('/posts', data);
-  console.log({ data });
-
   return mapPost(response.data);
 }
 
@@ -96,6 +99,14 @@ export async function fetchComments(postId: string): Promise<ICommentWithUser[]>
 
 export async function addComment(postId: string, content: string): Promise<void> {
   await api.post('/comments', { postId, content });
+}
+
+export async function deleteComment(commentId: string): Promise<void> {
+  await api.delete(`/comments/${commentId}`);
+}
+
+export async function updateComment(commentId: string, content: string): Promise<void> {
+  await api.patch('/comments', { commentId, content });
 }
 
 export async function uploadPostImage(file: File): Promise<string> {

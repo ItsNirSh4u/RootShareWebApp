@@ -5,6 +5,7 @@ import { CommentsController } from './comments.controller';
 import { Comment, CommentSchema } from './schemas/comment.schema';
 import { Post, PostSchema } from '../posts/schemas/post.schema';
 import { CommentOwnerGuard } from './guards/comment-owner.guard';
+import { CommentDeleteGuard } from './guards/comment-delete.guard';
 import { LikesModule } from '../likes/likes.module';
 
 @Module({
@@ -16,7 +17,7 @@ import { LikesModule } from '../likes/likes.module';
     forwardRef(() => LikesModule),
   ],
   controllers: [CommentsController],
-  providers: [CommentsService, CommentOwnerGuard],
+  providers: [CommentsService, CommentOwnerGuard, CommentDeleteGuard],
   exports: [CommentsService],
 })
 export class CommentsModule {}
