@@ -17,6 +17,9 @@ export class Message {
 
   @Prop({ required: true })
   content: string;
+
+  @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'User' }], default: [] })
+  likes: User[];
 }
 
 export const MessageSchema = SchemaFactory.createForClass(Message);

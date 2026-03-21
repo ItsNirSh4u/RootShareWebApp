@@ -61,7 +61,10 @@ export class UsersService {
     const users = await this.userModel
       .find({
         _id: { $ne: excludeUserId },
-        username: { $regex: query, $options: 'i' },
+        $or: [
+          { username: { $regex: query, $options: 'i' } },
+          { email: { $regex: query, $options: 'i' } },
+        ],
       })
       .select('username profileImageUrl')
       .limit(20)

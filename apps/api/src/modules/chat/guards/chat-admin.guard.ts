@@ -38,8 +38,8 @@ export class ChatAdminGuard implements CanActivate {
       throw new ForbiddenException('This action is only available for group chats');
     }
 
-    if (!chat.admin || chat.admin.toString() !== userId) {
-      throw new ForbiddenException('Only the group admin can perform this action');
+    if (!chat.admins?.some((a) => a.toString() === userId)) {
+      throw new ForbiddenException('Only group admins can perform this action');
     }
 
     request.chat = chat;

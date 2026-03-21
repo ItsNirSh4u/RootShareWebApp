@@ -13,14 +13,26 @@ export class Chat {
   @Prop({ type: String, default: null })
   name: string | null;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', default: null })
-  admin: User | null;
+  @Prop({
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'User' }],
+    default: [],
+  })
+  admins: User[];
 
   @Prop({
     type: [{ type: MongooseSchema.Types.ObjectId, ref: 'User' }],
     required: true,
   })
   participants: User[];
+
+  @Prop({ type: String, default: null })
+  description: string | null;
+
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', default: null })
+  owner: User | null;
+
+  @Prop({ type: String, default: null })
+  imageUrl: string | null;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Message' })
   lastMessage: Message;
