@@ -1,5 +1,5 @@
-import { IsArray, IsMongoId, IsNotEmpty, IsString, ArrayMinSize } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsArray, IsMongoId, IsNotEmpty, IsOptional, IsString, ArrayMinSize, MaxLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateGroupChatDto {
   @ApiProperty({
@@ -18,4 +18,14 @@ export class CreateGroupChatDto {
   @ArrayMinSize(1)
   @IsMongoId({ each: true })
   userIds: string[];
+
+  @ApiPropertyOptional({
+    description: 'Optional description for the group chat.',
+    example: 'A place to share plant care tips',
+    maxLength: 300,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  description?: string;
 }

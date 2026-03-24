@@ -39,6 +39,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
       const payload = await this.jwtService.verify(token);
       client.data.userId = payload.sub;
+      client.join(`user:${payload.sub}`);
       this.logger.log(`Client connected: ${client.id}, userId: ${payload.sub}`);
     } catch {
       this.logger.warn(`Invalid token, disconnecting client: ${client.id}`);
@@ -92,6 +93,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     };
 
     this.server.to(chatId).emit(ChatEvent.MESSAGE, message);
+    if (!client.rooms.has(chatId)) {
+      client.emit(ChatEvent.MESSAGE, message);
+    }
   }
 
   @UseGuards(WsJwtGuard)
@@ -109,6 +113,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   emitToRoom(roomId: string, event: string, data: Record<string, unknown>): void {
     this.server.to(roomId).emit(event, data);
+  }
+
+  emitToUser(userId: string, event: string, data: Record<string, unknown>): void {
+    this.server.to(`user:${userId}`).emit(event, data);
   }
 
   private toggleRoom(client: Socket, roomId: string, action: 'join' | 'leave'): void {
