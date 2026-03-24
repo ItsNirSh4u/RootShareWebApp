@@ -10,6 +10,7 @@ import { CommentsModule } from './modules/comments/comments.module';
 import { LikesModule } from './modules/likes/likes.module';
 import { SpeciesModule } from './modules/species/species.module';
 import { ChatModule } from './modules/chat/chat.module';
+import { AiModule } from './modules/ai/ai.module';
 
 @Module({
   imports: [
@@ -69,6 +70,7 @@ import { ChatModule } from './modules/chat/chat.module';
     LikesModule,
     SpeciesModule,
     ChatModule,
+    AiModule,
   ],
 })
 export class AppModule {}

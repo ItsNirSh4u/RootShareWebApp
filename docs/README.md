@@ -70,6 +70,20 @@ cp apps/api/.env.example apps/api/.env
 # Edit the .env files with your configuration
 ```
 
+#### AI Features (Gemini)
+
+AI-powered features (plant identification, plant info, AI chat) require a Google AI Studio API key.
+
+1. Go to [https://aistudio.google.com](https://aistudio.google.com) and sign in with a free Google account.
+2. Click **Get API key** and generate a new key.
+3. Add it to `apps/api/.env`:
+
+```
+GEMINI_API_KEY=your_key_here
+```
+
+> **Note:** The free tier has rate limits. The app handles this internally via response caching, but sustained heavy usage may still hit quota limits.
+
 ### 3. Start MongoDB
 
 ```bash
