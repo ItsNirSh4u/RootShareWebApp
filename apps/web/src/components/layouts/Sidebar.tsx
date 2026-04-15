@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, Sprout, User, LogOut, Menu, X, Leaf, MessageCircle } from 'lucide-react';
+import { Home, Sprout, User, LogOut, Menu, X, Leaf, MessageCircle, Bot } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import { cn } from '@/lib/utils';
 
@@ -12,6 +12,7 @@ const navItems = [
   { to: '/feed', icon: Home, label: 'Home' },
   { to: '/inventory', icon: Sprout, label: 'My Garden' },
   { to: '/community', icon: MessageCircle, label: 'Community' },
+  { to: '/ai-chat', icon: Bot, label: 'Plant Assistant' },
   { to: '/profile', icon: User, label: 'Profile' },
 ];
 

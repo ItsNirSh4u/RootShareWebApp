@@ -17,13 +17,15 @@ const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 @Injectable()
 export class AiService {
   private readonly genai: GoogleGenAI;
+  private readonly model: string;
   private readonly rateLimits = new Map<string, { count: number; resetAt: number }>();
 
   constructor(
     @InjectModel(AiCache.name) private readonly cacheModel: Model<AiCacheDocument>,
     private readonly configService: ConfigService,
   ) {
-    this.genai = new GoogleGenAI({ apiKey: this.configService.get<string>('GEMINI_API_KEY')! });
+    this.genai = new GoogleGenAI({});
+    this.model = this.configService.get<string>('GEMINI_MODEL')!;
   }
 
   checkRateLimit(userId: string): void {
@@ -47,7 +49,7 @@ export class AiService {
     if (cached) return cached.response;
 
     const response = await this.genai.models.generateContent({
-      model: GEMINI_MODEL,
+      model: this.model,
       config: { systemInstruction: PLANT_SYSTEM_PROMPT },
       contents: [
         {
@@ -82,7 +84,7 @@ export class AiService {
     ];
 
     const stream = await this.genai.models.generateContentStream({
-      model: GEMINI_MODEL,
+      model: this.model,
       config: { systemInstruction: CHAT_SYSTEM_PROMPT },
       contents,
     });
@@ -99,7 +101,7 @@ export class AiService {
     if (cached) return cached.response;
 
     const response = await this.genai.models.generateContent({
-      model: GEMINI_MODEL,
+      model: this.model,
       config: { systemInstruction: INFO_SYSTEM_PROMPT },
       contents: `Tell me about the plant: ${plantName}`,
     });

@@ -101,8 +101,13 @@ export class AiController {
       for await (const chunk of this.aiService.streamChat(dto.message, dto.history ?? [], dto.imagePath)) {
         res.write(chunk);
       }
+    } catch (err) {
+      if (!res.headersSent) {
+        res.status(500).json({ message: (err as Error).message ?? 'AI service error' });
+        return;
+      }
     } finally {
-      res.end();
+      if (!res.writableEnded) res.end();
     }
   }
 
