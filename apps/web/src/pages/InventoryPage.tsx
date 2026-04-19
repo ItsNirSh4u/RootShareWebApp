@@ -13,6 +13,7 @@ import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { PostModal } from '@/components/feed/PostModal';
 import { useAuthStore } from '@/stores/auth.store';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import {
   fetchGardenPlants,
   fetchPlantPosts,
@@ -21,6 +22,7 @@ import {
   deletePlant,
   uploadPlantImage,
   fetchSpeciesList,
+  identifyPlantSpecies,
 } from './Garden/garden';
 
 type StatusFilter = 'all' | PlantStatus;
@@ -273,7 +275,10 @@ function PlantFormModal({ plant, onClose, onSuccess }: PlantFormModalProps): JSX
   const [species, setSpecies] = useState(plant?.species ?? '');
   const [status, setStatus] = useState<PlantStatus>(plant?.status ?? PlantStatus.ACTIVE);
   const [imageUrl, setImageUrl] = useState(plant?.imageUrl ?? '');
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageUploading, setImageUploading] = useState(false);
+  const [isIdentifying, setIsIdentifying] = useState(false);
+  const [speciesLocked, setSpeciesLocked] = useState(false);
 
   const { data: speciesList } = useQuery({
     queryKey: ['species'],
@@ -303,12 +308,33 @@ function PlantFormModal({ plant, onClose, onSuccess }: PlantFormModalProps): JSX
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = '';
+    setImageFile(file);
+    setSpeciesLocked(false);
     setImageUploading(true);
     try {
       const url = await uploadPlantImage(file);
       setImageUrl(url);
     } finally {
       setImageUploading(false);
+    }
+  }
+
+  async function handleIdentify() {
+    if (!imageFile) return;
+    setIsIdentifying(true);
+    try {
+      const result = await identifyPlantSpecies(imageFile);
+      const match = speciesList?.find((s) => result.toLowerCase().includes(s.toLowerCase()));
+      if (match) {
+        setSpecies(match);
+        setSpeciesLocked(true);
+      } else {
+        toast.error('Could not identify species. Please select manually.');
+      }
+    } catch {
+      toast.error('AI recognition failed. Please try again.');
+    } finally {
+      setIsIdentifying(false);
     }
   }
 
@@ -366,13 +392,32 @@ function PlantFormModal({ plant, onClose, onSuccess }: PlantFormModalProps): JSX
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-text-muted">Species</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-text-muted">Species</label>
+              <button
+                type="button"
+                onClick={handleIdentify}
+                disabled={!imageUrl || isIdentifying}
+                className={cn(
+                  'text-xs underline leading-none',
+                  imageUrl && !isIdentifying
+                    ? 'text-primary cursor-pointer hover:opacity-80'
+                    : 'text-text-muted cursor-default',
+                )}
+              >
+                {isIdentifying ? 'Identifying…' : "Don't know the species? Use AI"}
+              </button>
+            </div>
             <input
               value={species}
-              onChange={(e) => setSpecies(e.target.value)}
+              onChange={(e) => { if (!speciesLocked) setSpecies(e.target.value); }}
               placeholder="e.g. Monstera deliciosa"
               list="species-list"
-              className="w-full h-10 text-sm border border-border-default rounded-lg px-3 bg-bg-main text-text-base focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-text-muted"
+              disabled={speciesLocked}
+              className={cn(
+                'w-full h-10 text-sm border border-border-default rounded-lg px-3 bg-bg-main text-text-base focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-text-muted',
+                speciesLocked && 'opacity-60 cursor-not-allowed',
+              )}
             />
             {speciesList && (
               <datalist id="species-list">
