@@ -42,3 +42,12 @@ export async function fetchSpeciesList(): Promise<string[]> {
   const res = await api.get<{ _id: string; name: string }[]>('/species');
   return res.data.map((s) => s.name);
 }
+
+export async function identifyPlantSpecies(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append('image', file);
+  const res = await api.post<{ result: string }>('/ai/identify', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return res.data.result;
+}
