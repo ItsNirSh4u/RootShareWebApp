@@ -1,6 +1,6 @@
 import {
   Controller, Post, Get, Param, Body, Req, Res,
-  UseGuards, UseInterceptors, UploadedFile, BadRequestException,
+  UseGuards, UseInterceptors, UploadedFile, BadRequestException, InternalServerErrorException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -75,8 +75,13 @@ export class AiController {
   ): Promise<{ result: string }> {
     if (!file) throw new BadRequestException('Image file is required');
     this.aiService.checkRateLimit(req.user.id);
-    const result = await this.aiService.identifyPlant(file.path);
-    return { result };
+    try {
+      const result = await this.aiService.identifyPlant(file.path);
+      return { result };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(`Plant identification failed: ${message}`);
+    }
   }
 
   @Post('chat')

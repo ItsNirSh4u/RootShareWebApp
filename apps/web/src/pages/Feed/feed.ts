@@ -38,9 +38,11 @@ export async function fetchPosts(): Promise<IPostWithDetails[]> {
   return response.data.map(mapPost);
 }
 
+type RawPlant = Omit<IPlant, 'id'> & { _id: string };
+
 export async function fetchFeaturedPlants(): Promise<IPlant[]> {
-  const response = await api.get<IPlant[]>('/plants/featured', { params: { limit: 10 } });
-  return response.data;
+  const response = await api.get<RawPlant[]>('/plants/featured', { params: { limit: 10 } });
+  return response.data.map((p) => ({ ...p, id: p._id }));
 }
 
 export async function fetchUserPlants(): Promise<IPlant[]> {
