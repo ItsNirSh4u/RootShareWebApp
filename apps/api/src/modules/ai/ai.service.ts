@@ -10,7 +10,7 @@ import { AiCache, AiCacheDocument } from './schemas/ai-cache.schema';
 import { PLANT_SYSTEM_PROMPT, CHAT_SYSTEM_PROMPT, INFO_SYSTEM_PROMPT } from './ai-prompts';
 import { ChatMessageDto } from './dto/ai-chat.dto';
 
-const GEMINI_MODEL = 'gemini-2.5-flash-preview-04-17';
+const GEMINI_MODEL = 'gemini-2.5-flash';
 const RATE_LIMIT_MAX = 20;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 
