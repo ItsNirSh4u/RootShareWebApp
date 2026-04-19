@@ -410,7 +410,7 @@ function PlantFormModal({ plant, onClose, onSuccess }: PlantFormModalProps): JSX
             </div>
             <input
               value={species}
-              onChange={(e) => { if (!speciesLocked) setSpecies(e.target.value); }}
+              onChange={(e) => setSpecies(e.target.value)}
               placeholder="e.g. Monstera deliciosa"
               list="species-list"
               disabled={speciesLocked}
