@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Bot, Send, Trash2, Leaf, ImagePlus } from 'lucide-react';
+import { Bot, Send, Trash2, Leaf, ImagePlus, X } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { cn } from '@/lib/utils';
-import { streamChatMessage, IChatMessage } from './ai';
+import { streamChatMessage, identifyPlant, IChatMessage, IChatDisplayMessage } from './ai';
 
 const SUGGESTIONS = [
   'How often should I water my monstera?',
@@ -13,28 +14,76 @@ const SUGGESTIONS = [
 ];
 
 export function AiChatPage(): JSX.Element {
-  const [messages, setMessages] = useState<IChatMessage[]>([]);
+  const [messages, setMessages] = useState<IChatDisplayMessage[]>([]);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, streamingContent]);
 
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    };
+  }, [imagePreviewUrl]);
+
+  const clearImage = () => {
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    setSelectedImage(null);
+    setImagePreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    setSelectedImage(file);
+    setImagePreviewUrl(URL.createObjectURL(file));
+  };
+
   const sendMessage = useCallback(
     async (text: string) => {
       const trimmed = text.trim();
-      if (!trimmed || isStreaming) return;
+      if ((!trimmed && !selectedImage) || isStreaming) return;
 
-      const history = [...messages];
-      setMessages((prev) => [...prev, { role: 'user', content: trimmed }]);
-      setInput('');
       setError(null);
       setIsStreaming(true);
+      setInput('');
+
+      if (selectedImage && imagePreviewUrl) {
+        const imageFile = selectedImage;
+        const previewUrl = imagePreviewUrl;
+        setSelectedImage(null);
+        setImagePreviewUrl(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+
+        setMessages((prev) => [
+          ...prev,
+          { role: 'user', content: trimmed || '📷 Plant photo', imageUrl: previewUrl },
+        ]);
+
+        try {
+          const result = await identifyPlant(imageFile);
+          setMessages((prev) => [...prev, { role: 'model', content: result }]);
+        } catch (err) {
+          setError((err as Error).message ?? 'Failed to identify plant.');
+        } finally {
+          setIsStreaming(false);
+        }
+        return;
+      }
+
+      const history: IChatMessage[] = messages.map(({ role, content }) => ({ role, content }));
+      setMessages((prev) => [...prev, { role: 'user', content: trimmed }]);
       setStreamingContent('');
 
       abortRef.current = new AbortController();
@@ -64,7 +113,7 @@ export function AiChatPage(): JSX.Element {
         setIsStreaming(false);
       }
     },
-    [messages, isStreaming],
+    [messages, isStreaming, selectedImage, imagePreviewUrl],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -80,9 +129,11 @@ export function AiChatPage(): JSX.Element {
     setStreamingContent('');
     setIsStreaming(false);
     setError(null);
+    clearImage();
   };
 
   const isEmpty = messages.length === 0 && !isStreaming;
+  const canSend = (input.trim().length > 0 || !!selectedImage) && !isStreaming;
 
   return (
     <div className="flex flex-col h-full">
@@ -145,21 +196,45 @@ export function AiChatPage(): JSX.Element {
       </div>
 
       <div className="flex-shrink-0 border-t border-border-default bg-bg-card px-4 py-3">
+        {imagePreviewUrl && (
+          <div className="relative inline-block mb-2">
+            <img
+              src={imagePreviewUrl}
+              alt="Selected plant"
+              className="h-20 w-20 object-cover rounded-lg border border-border-default"
+            />
+            <button
+              onClick={clearImage}
+              className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-bg-card border border-border-default flex items-center justify-center hover:bg-bg-muted"
+              aria-label="Remove image"
+            >
+              <X size={10} className="text-text-muted" />
+            </button>
+          </div>
+        )}
         <div className="flex items-end gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handleImageChange}
+          />
           <Button
             variant="ghost"
             size="icon"
             disabled={isStreaming}
             aria-label="Upload image"
-            title="Upload image (coming soon)"
+            onClick={() => fileInputRef.current?.click()}
           >
-            <ImagePlus size={18} className="text-text-muted" />
+            <ImagePlus size={18} className={cn('transition-colors', selectedImage ? 'text-primary' : 'text-text-muted')} />
           </Button>
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask about plant care..."
+            placeholder={selectedImage ? 'Add a message or send the photo…' : 'Ask about plant care...'}
             rows={1}
             disabled={isStreaming}
             className={cn(
@@ -172,7 +247,7 @@ export function AiChatPage(): JSX.Element {
           <Button
             size="icon"
             onClick={() => sendMessage(input)}
-            disabled={!input.trim() || isStreaming}
+            disabled={!canSend}
             aria-label="Send message"
           >
             <Send size={16} />
@@ -185,7 +260,7 @@ export function AiChatPage(): JSX.Element {
 }
 
 interface MessageBubbleProps {
-  message: IChatMessage;
+  message: IChatDisplayMessage;
   isStreaming?: boolean;
 }
 
@@ -204,13 +279,37 @@ function MessageBubble({ message, isStreaming = false }: MessageBubbleProps): JS
       {!isUser && <BotAvatar />}
       <div
         className={cn(
-          'max-w-[75%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap',
+          'max-w-[75%] rounded-xl px-3 py-2 text-sm',
           isUser
-            ? 'bg-primary text-primary-foreground'
+            ? 'bg-primary text-primary-foreground whitespace-pre-wrap'
             : 'bg-bg-card border border-border-default text-text-base',
         )}
       >
-        {message.content}
+        {message.imageUrl && (
+          <img
+            src={message.imageUrl}
+            alt="Plant photo"
+            className="rounded-lg mb-1 max-h-48 object-cover"
+          />
+        )}
+        {isUser ? (
+          message.content
+        ) : (
+          <ReactMarkdown
+            components={{
+              p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
+              strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+              ul: ({ children }) => <ul className="list-disc pl-4 mb-1 space-y-0.5">{children}</ul>,
+              ol: ({ children }) => <ol className="list-decimal pl-4 mb-1 space-y-0.5">{children}</ol>,
+              li: ({ children }) => <li>{children}</li>,
+              h1: ({ children }) => <p className="font-semibold mb-1">{children}</p>,
+              h2: ({ children }) => <p className="font-semibold mb-1">{children}</p>,
+              h3: ({ children }) => <p className="font-medium mb-0.5">{children}</p>,
+            }}
+          >
+            {message.content}
+          </ReactMarkdown>
+        )}
         {isStreaming && (
           <span className="inline-block w-0.5 h-3.5 bg-current ml-0.5 animate-pulse" />
         )}

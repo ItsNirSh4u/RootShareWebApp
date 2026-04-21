@@ -1,3 +1,4 @@
+import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth.store';
 
 export interface IChatMessage {
@@ -5,15 +6,13 @@ export interface IChatMessage {
   content: string;
 }
 
-export const streamChatMessage = async (
-  message: string,
-  history: IChatMessage[],
-  onChunk: (chunk: string) => void,
-  signal?: AbortSignal,
-): Promise<void> => {
-  const { tokens } = useAuthStore.getState();
+export interface IChatDisplayMessage extends IChatMessage {
+  imageUrl?: string;
+}
 
-  const res = await fetch('/api/ai/chat', {
+const chatFetch = (message: string, history: IChatMessage[], signal?: AbortSignal): Promise<Response> => {
+  const { tokens } = useAuthStore.getState();
+  return fetch('/api/ai/chat', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -22,6 +21,20 @@ export const streamChatMessage = async (
     body: JSON.stringify({ message, history }),
     signal,
   });
+};
+
+export const streamChatMessage = async (
+  message: string,
+  history: IChatMessage[],
+  onChunk: (chunk: string) => void,
+  signal?: AbortSignal,
+): Promise<void> => {
+  let res = await chatFetch(message, history, signal);
+
+  if (res.status === 401) {
+    await api.get('/auth/me').catch(() => null);
+    res = await chatFetch(message, history, signal);
+  }
 
   if (!res.ok) {
     if (res.status === 429) throw new Error('Rate limit exceeded. Try again later.');
@@ -37,4 +50,11 @@ export const streamChatMessage = async (
     if (done) break;
     onChunk(decoder.decode(value, { stream: true }));
   }
+};
+
+export const identifyPlant = async (file: File): Promise<string> => {
+  const form = new FormData();
+  form.append('image', file);
+  const { data } = await api.postForm<{ result: string }>('/ai/identify', form);
+  return data.result;
 };

@@ -74,8 +74,13 @@ export class AiService {
     const userParts: { text?: string; inlineData?: { mimeType: string; data: string } }[] = [{ text: message }];
 
     if (imagePath) {
-      const buffer = readFileSync(imagePath);
-      userParts.push({ inlineData: { mimeType: this.getMimeType(imagePath), data: buffer.toString('base64') } });
+      const uploadsDir = path.resolve(process.env.UPLOAD_PATH || './uploads');
+      const resolved = path.resolve(imagePath);
+      if (!resolved.startsWith(uploadsDir)) {
+        throw new HttpException('Invalid image path', HttpStatus.BAD_REQUEST);
+      }
+      const buffer = readFileSync(resolved);
+      userParts.push({ inlineData: { mimeType: this.getMimeType(resolved), data: buffer.toString('base64') } });
     }
 
     const contents = [

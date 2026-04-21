@@ -46,8 +46,8 @@ export async function fetchFeaturedPlants(): Promise<IPlant[]> {
 }
 
 export async function fetchUserPlants(): Promise<IPlant[]> {
-  const response = await api.get<IPlant[]>('/plants');
-  return response.data;
+  const response = await api.get<RawPlant[]>('/plants');
+  return response.data.map((p) => ({ ...p, id: p._id }));
 }
 
 export async function toggleLikePost(postId: string): Promise<{ liked: boolean }> {
@@ -114,8 +114,6 @@ export async function updateComment(commentId: string, content: string): Promise
 export async function uploadPostImage(file: File): Promise<string> {
   const formData = new FormData();
   formData.append('image', file);
-  const response = await api.post<{ url: string }>('/posts/images', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  const response = await api.postForm<{ url: string }>('/posts/images', formData);
   return response.data.url;
 }
