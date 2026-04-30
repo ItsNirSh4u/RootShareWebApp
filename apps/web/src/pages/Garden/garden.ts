@@ -46,6 +46,8 @@ export async function fetchSpeciesList(): Promise<string[]> {
 export async function identifyPlantSpecies(file: File): Promise<string> {
   const formData = new FormData();
   formData.append('image', file);
-  const res = await api.post<{ result: string }>('/ai/identify', formData);
+  const res = await api.post<{ result: string }>('/ai/identify', formData, {
+    headers: { 'Content-Type': undefined },
+  });
   return res.data.result;
 }

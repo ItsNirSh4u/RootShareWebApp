@@ -62,6 +62,7 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps): JSX.Element {
             <NavLink
               key={to}
               to={to}
+              onClick={() => window.innerWidth < 1024 && isOpen && onToggle()}
               className={({ isActive }) =>
                 cn(
                   'h-10 px-2 rounded-md text-sm font-medium transition-colors flex items-center gap-3',
