@@ -26,7 +26,7 @@ export class PostsService {
 
     const newPost = new this.postModel({
       ...createPostDto,
-      plantId: new Types.ObjectId(createPostDto.plantId),
+      ...(createPostDto.plantId && { plantId: new Types.ObjectId(createPostDto.plantId) }),
       userId: new Types.ObjectId(userId),
     });
     return newPost.save();

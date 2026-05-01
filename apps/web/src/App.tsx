@@ -8,6 +8,7 @@ import { FeedPage } from '@/pages/FeedPage';
 import { InventoryPage } from '@/pages/InventoryPage';
 import { ProfilePage } from '@/pages/Profile/ProfilePage';
 import { CommunityPage } from '@/pages/Community/CommunityPage';
+import { AiChatPage } from '@/pages/AiChat/AiChatPage';
 import { useAuthStore } from '@/stores/auth.store';
 import { AppLayout } from '@/components/layouts/AppLayout';
 
@@ -35,6 +36,10 @@ function App(): JSX.Element {
         <Route
           path="/community"
           element={isAuthenticated ? <AppLayout><CommunityPage /></AppLayout> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/ai-chat"
+          element={isAuthenticated ? <AppLayout><AiChatPage /></AppLayout> : <Navigate to="/login" />}
         />
       </Routes>
     </BrowserRouter>
