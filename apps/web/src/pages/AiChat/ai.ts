@@ -55,6 +55,6 @@ export const streamChatMessage = async (
 export const identifyPlant = async (file: File): Promise<string> => {
   const form = new FormData();
   form.append('image', file);
-  const { data } = await api.postForm<{ result: string }>('/ai/identify', form);
+  const { data } = await api.post<{ result: string }>('/ai/identify', form);
   return data.result;
 };

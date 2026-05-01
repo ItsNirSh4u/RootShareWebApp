@@ -114,6 +114,6 @@ export async function updateComment(commentId: string, content: string): Promise
 export async function uploadPostImage(file: File): Promise<string> {
   const formData = new FormData();
   formData.append('image', file);
-  const response = await api.postForm<{ url: string }>('/posts/images', formData);
+  const response = await api.post<{ url: string }>('/posts/images', formData);
   return response.data.url;
 }
