@@ -8,6 +8,7 @@ import {
   UseGuards,
   Request,
   Query,
+  Param,
   UseInterceptors,
   UploadedFile,
   BadRequestException,
@@ -121,6 +122,15 @@ export class PlantsController {
   @ApiUnauthorizedResponse()
   findAllWithStats(@Request() req: { user: { id: string } }): Promise<Record<string, unknown>[]> {
     return this.plantsService.findAllWithStats(req.user.id);
+  }
+
+  @Get('user/:userId')
+  @ApiParam({ name: 'userId', description: 'User ID', type: String })
+  @ApiOperation({ summary: "Get a user's plants with stats" })
+  @ApiResponse({ status: 200, description: "User's plants with postsCount and commentsCount." })
+  @ApiUnauthorizedResponse()
+  findByUser(@Param('userId') userId: string): Promise<Record<string, unknown>[]> {
+    return this.plantsService.findAllWithStats(userId);
   }
 
   @Get(':id')

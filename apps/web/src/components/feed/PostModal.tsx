@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, Trash2, Pencil, Heart, MessageCircle, ImagePlus, XCircle, MapPin } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { IPostWithDetails } from '@rootshare/shared-types';
@@ -17,6 +18,7 @@ import {
   deleteComment,
   updateComment,
   uploadPostImage,
+  toggleCommentLike,
 } from '@/pages/Feed/feed';
 import { fetchUserPlants } from '@/pages/Profile/profile';
 
@@ -54,6 +56,7 @@ export type PostModalProps = {
 
 export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: PostModalProps): JSX.Element {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   const isOwner = mode === 'create' || post?.user.id === currentUserId;
@@ -70,6 +73,7 @@ export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: Pos
   const [commentText, setCommentText] = useState('');
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
+  const [likedCommentIds, setLikedCommentIds] = useState<Set<string>>(new Set());
   const isFormMode = mode === 'create' || editing;
   const needsLocation = typeValue === PostType.SWAP || typeValue === PostType.GIVEAWAY;
 
@@ -201,6 +205,43 @@ export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: Pos
       );
       setEditingCommentId(null);
       setEditingContent('');
+    },
+  });
+
+  const likeCommentMutation = useMutation({
+    mutationFn: (commentId: string) => toggleCommentLike(commentId),
+    onMutate: (commentId) => {
+      const wasLiked = likedCommentIds.has(commentId);
+      setLikedCommentIds((prev) => {
+        const next = new Set(prev);
+        wasLiked ? next.delete(commentId) : next.add(commentId);
+        return next;
+      });
+      queryClient.setQueryData<import('@rootshare/shared-types').ICommentWithUser[]>(
+        ['comments', currentPost?.id],
+        (old) => old?.map((c) =>
+          c.id === commentId
+            ? { ...c, likesCount: Math.max(0, (c.likesCount ?? 0) + (wasLiked ? -1 : 1)) }
+            : c
+        ) ?? [],
+      );
+      return { wasLiked };
+    },
+    onSuccess: ({ liked }, commentId) => {
+      setLikedCommentIds((prev) => {
+        const next = new Set(prev);
+        liked ? next.add(commentId) : next.delete(commentId);
+        return next;
+      });
+    },
+    onError: (_err, commentId, context) => {
+      const { wasLiked } = context as { wasLiked: boolean };
+      setLikedCommentIds((prev) => {
+        const next = new Set(prev);
+        wasLiked ? next.add(commentId) : next.delete(commentId);
+        return next;
+      });
+      queryClient.invalidateQueries({ queryKey: ['comments', currentPost?.id] });
     },
   });
 
@@ -392,7 +433,11 @@ export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: Pos
           ) : currentPost ? (
             <>
               <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => { onClose(); navigate(`/profile/${currentPost.user.id}`); }}
+                  className="flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
+                >
                   <div className="flex-shrink-0 h-9 w-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-sm select-none">
                     {currentPost.user.username.charAt(0).toUpperCase()}
                   </div>
@@ -408,7 +453,7 @@ export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: Pos
                       })}
                     </span>
                   </div>
-                </div>
+                </button>
                 <span
                   className={cn(
                     'text-xs font-medium px-2.5 py-0.5 rounded-full',
@@ -540,14 +585,22 @@ export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: Pos
                       const isEditingThis = editingCommentId === comment.id;
                       return (
                         <div key={comment.id} className="flex gap-2.5 group">
-                          <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center text-primary text-xs font-semibold select-none">
+                          <button
+                            type="button"
+                            onClick={() => { onClose(); navigate(`/profile/${comment.user.id}`); }}
+                            className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center text-primary text-xs font-semibold select-none hover:opacity-80 transition-opacity"
+                          >
                             {comment.user.username.charAt(0).toUpperCase()}
-                          </div>
+                          </button>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-baseline gap-1.5 flex-wrap">
-                              <span className="text-xs font-semibold text-text-base">
+                              <button
+                                type="button"
+                                onClick={() => { onClose(); navigate(`/profile/${comment.user.id}`); }}
+                                className="text-xs font-semibold text-text-base hover:underline"
+                              >
                                 {comment.user.username}
-                              </span>
+                              </button>
                               <span className="text-xs text-text-muted">
                                 {formatRelativeTime(comment.createdAt)}
                               </span>
@@ -597,7 +650,28 @@ export function PostModal({ mode, post, currentUserId, onClose, onSuccess }: Pos
                                 </div>
                               </div>
                             ) : (
-                              <p className="text-sm text-text-base leading-snug">{comment.content}</p>
+                              <>
+                                <p className="text-sm text-text-base leading-snug">{comment.content}</p>
+                                <button
+                                  type="button"
+                                  onClick={() => likeCommentMutation.mutate(comment.id)}
+                                  className={cn(
+                                    'flex items-center gap-1 mt-1 transition-colors active:scale-90',
+                                    likedCommentIds.has(comment.id)
+                                      ? 'text-red-500'
+                                      : 'text-text-muted hover:text-red-400',
+                                  )}
+                                  aria-label={likedCommentIds.has(comment.id) ? 'Unlike comment' : 'Like comment'}
+                                >
+                                  <Heart
+                                    size={12}
+                                    className={cn(likedCommentIds.has(comment.id) && 'fill-red-500')}
+                                  />
+                                  {(comment.likesCount ?? 0) > 0 && (
+                                    <span className="text-xs">{comment.likesCount}</span>
+                                  )}
+                                </button>
+                              </>
                             )}
                           </div>
                           {!isEditingThis && (

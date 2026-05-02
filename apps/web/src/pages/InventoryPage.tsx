@@ -128,11 +128,11 @@ type PlantDetailPanelProps = {
   plant: IPlantWithStats;
   currentUserId: string;
   onClose: () => void;
-  onEdit: (plant: IPlantWithStats) => void;
-  onDelete: (plant: IPlantWithStats) => void;
+  onEdit?: (plant: IPlantWithStats) => void;
+  onDelete?: (plant: IPlantWithStats) => void;
 };
 
-function PlantDetailPanel({ plant, currentUserId, onClose, onEdit, onDelete }: PlantDetailPanelProps): JSX.Element {
+export function PlantDetailPanel({ plant, currentUserId, onClose, onEdit, onDelete }: PlantDetailPanelProps): JSX.Element {
   const [selectedPost, setSelectedPost] = useState<IPostWithDetails | null>(null);
   const queryClient = useQueryClient();
 
@@ -156,14 +156,20 @@ function PlantDetailPanel({ plant, currentUserId, onClose, onEdit, onDelete }: P
             <ArrowLeft size={18} />
           </button>
           <h2 className="text-sm font-semibold text-text-base flex-1 truncate">{plant.name}</h2>
-          <div className="flex gap-1.5">
-            <Button size="icon" variant="ghost" onClick={() => onEdit(plant)} aria-label="Edit plant">
-              <Pencil size={15} className="text-text-muted" />
-            </Button>
-            <Button size="icon" variant="ghost" onClick={() => onDelete(plant)} aria-label="Delete plant">
-              <Trash2 size={15} className="text-destructive" />
-            </Button>
-          </div>
+          {(onEdit || onDelete) && (
+            <div className="flex gap-1.5">
+              {onEdit && (
+                <Button size="icon" variant="ghost" onClick={() => onEdit(plant)} aria-label="Edit plant">
+                  <Pencil size={15} className="text-text-muted" />
+                </Button>
+              )}
+              {onDelete && (
+                <Button size="icon" variant="ghost" onClick={() => onDelete(plant)} aria-label="Delete plant">
+                  <Trash2 size={15} className="text-destructive" />
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex-1 flex flex-col">

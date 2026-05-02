@@ -1,5 +1,5 @@
 import api from '@/lib/api';
-import type { IPostWithDetails, IPlant, IUser, IUserUpdate } from '@rootshare/shared-types';
+import type { IPostWithDetails, IPlant, IPlantWithStats, IUser, IUserUpdate } from '@rootshare/shared-types';
 import { mapPost, type RawPost } from '@/pages/Feed/feed';
 
 export async function fetchUserPosts(userId: string): Promise<IPostWithDetails[]> {
@@ -8,10 +8,21 @@ export async function fetchUserPosts(userId: string): Promise<IPostWithDetails[]
 }
 
 type RawPlant = Omit<IPlant, 'id'> & { _id: string };
+type RawPlantWithStats = Omit<IPlantWithStats, 'id'> & { _id: string };
 
-export async function fetchUserPlants(): Promise<IPlant[]> {
-  const response = await api.get<RawPlant[]>('/plants');
+export async function fetchUserPlants(): Promise<IPlantWithStats[]> {
+  const response = await api.get<RawPlantWithStats[]>('/plants/with-stats');
   return response.data.map((p) => ({ ...p, id: p._id }));
+}
+
+export async function fetchUserPlantsByUserId(userId: string): Promise<IPlantWithStats[]> {
+  const response = await api.get<RawPlantWithStats[]>(`/plants/user/${userId}`);
+  return response.data.map((p) => ({ ...p, id: p._id }));
+}
+
+export async function fetchUserById(userId: string): Promise<IUser> {
+  const response = await api.get<IUser>(`/users/${userId}`);
+  return response.data;
 }
 
 export async function updateProfile(data: IUserUpdate): Promise<IUser> {

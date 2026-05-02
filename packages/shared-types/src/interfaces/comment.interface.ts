@@ -3,6 +3,7 @@ export interface IComment {
   postId: string;
   userId: string;
   content: string;
+  likesCount?: number;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -1,16 +1,18 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Pencil, Check, X, Leaf, Sprout, Camera, Plus } from 'lucide-react';
-import type { IPostWithDetails, IPlant } from '@rootshare/shared-types';
+import { Pencil, Check, X, Leaf, Sprout, Camera, Plus, MessageCircle } from 'lucide-react';
+import type { IPostWithDetails, IPlantWithStats } from '@rootshare/shared-types';
 import { PlantStatus, PostType } from '@rootshare/shared-types';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { Spinner } from '@/components/ui/Spinner';
 import { PostModal } from '@/components/feed/PostModal';
+import { PlantDetailPanel } from '@/pages/InventoryPage';
 import { useAuthStore } from '@/stores/auth.store';
 import { cn } from '@/lib/utils';
-import { fetchUserPosts, fetchUserPlants, updateProfile, uploadProfileImage } from './profile';
+import { fetchUserPosts, fetchUserPlants, fetchUserPlantsByUserId, fetchUserById, updateProfile, uploadProfileImage } from './profile';
 
 type Tab = 'posts' | 'plants';
 
@@ -85,11 +87,14 @@ function ProfilePostCard({ post, onClick }: ProfilePostCardProps): JSX.Element {
   );
 }
 
-type PlantCardProps = { plant: IPlant };
+type PlantCardProps = { plant: IPlantWithStats; onClick: () => void };
 
-function PlantCard({ plant }: PlantCardProps): JSX.Element {
+function PlantCard({ plant, onClick }: PlantCardProps): JSX.Element {
   return (
-    <div className="bg-bg-card border border-border-default rounded-lg overflow-hidden flex flex-col">
+    <div
+      className="bg-bg-card border border-border-default rounded-lg overflow-hidden flex flex-col cursor-pointer hover:border-primary/40 transition-colors"
+      onClick={onClick}
+    >
       {plant.imageUrl && (
         <img src={plant.imageUrl} alt={plant.name} className="w-full h-32 object-cover" />
       )}
@@ -106,24 +111,36 @@ function PlantCard({ plant }: PlantCardProps): JSX.Element {
 
 export function ProfilePage(): JSX.Element {
   const { user, updateUser } = useAuthStore();
+  const { userId: paramUserId } = useParams<{ userId?: string }>();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [userId] = useState(() => user?.id);
+  const isOwnProfile = !paramUserId || paramUserId === user?.id;
+  const viewedUserId = paramUserId ?? user?.id ?? '';
+
   const [activeTab, setActiveTab] = useState<Tab>('posts');
+  useEffect(() => { setActiveTab('posts'); }, [viewedUserId]);
   const [editingUsername, setEditingUsername] = useState(false);
   const [usernameValue, setUsernameValue] = useState(user?.username ?? '');
   const [selectedPost, setSelectedPost] = useState<IPostWithDetails | null>(null);
   const [showCreatePost, setShowCreatePost] = useState(false);
+  const [selectedPlant, setSelectedPlant] = useState<IPlantWithStats | null>(null);
+
+  const { data: viewedUser } = useQuery({
+    queryKey: ['profile', 'user', viewedUserId],
+    queryFn: () => fetchUserById(viewedUserId),
+    enabled: !isOwnProfile && !!viewedUserId,
+  });
 
   const {
     data: posts,
     isLoading: postsLoading,
     error: postsError,
   } = useQuery({
-    queryKey: ['profile', 'posts', userId],
-    queryFn: () => fetchUserPosts(userId!),
-    enabled: !!userId,
+    queryKey: ['profile', 'posts', viewedUserId],
+    queryFn: () => fetchUserPosts(viewedUserId),
+    enabled: !!viewedUserId,
   });
 
   const {
@@ -131,9 +148,9 @@ export function ProfilePage(): JSX.Element {
     isLoading: plantsLoading,
     error: plantsError,
   } = useQuery({
-    queryKey: ['profile', 'plants'],
-    queryFn: fetchUserPlants,
-    enabled: !!userId,
+    queryKey: ['profile', 'plants', viewedUserId],
+    queryFn: () => isOwnProfile ? fetchUserPlants() : fetchUserPlantsByUserId(viewedUserId),
+    enabled: !!viewedUserId,
   });
 
   const updateUsernameMutation = useMutation({
@@ -151,7 +168,13 @@ export function ProfilePage(): JSX.Element {
     },
   });
 
-  const avatarSrc = user?.localProfileImageUrl ?? user?.profileImageUrl;
+  const displayUser = isOwnProfile ? user : viewedUser;
+  const avatarSrc = displayUser?.localProfileImageUrl ?? displayUser?.profileImageUrl;
+
+  function handleOpenChat() {
+    if (!paramUserId) return;
+    navigate('/community', { state: { openWithUserId: paramUserId } });
+  }
 
   function handleAvatarClick() {
     fileInputRef.current?.click();
@@ -159,9 +182,7 @@ export function ProfilePage(): JSX.Element {
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) {
-      uploadImageMutation.mutate(file);
-    }
+    if (file) uploadImageMutation.mutate(file);
     e.target.value = '';
   }
 
@@ -184,7 +205,7 @@ export function ProfilePage(): JSX.Element {
   }
 
   function handlePostMutationSuccess() {
-    queryClient.invalidateQueries({ queryKey: ['profile', 'posts', userId] });
+    queryClient.invalidateQueries({ queryKey: ['profile', 'posts', viewedUserId] });
     queryClient.invalidateQueries({ queryKey: ['posts'] });
   }
 
@@ -196,41 +217,49 @@ export function ProfilePage(): JSX.Element {
         <div className="bg-bg-card border border-border-default rounded-xl p-6 mb-6">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
             <div className="relative flex-shrink-0">
-              <button
-                type="button"
-                onClick={handleAvatarClick}
-                className="relative w-24 h-24 rounded-full overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                aria-label="Upload profile picture"
-              >
-                {uploadImageMutation.isPending ? (
-                  <div className="w-24 h-24 rounded-full bg-bg-muted flex items-center justify-center">
-                    <Spinner size="sm" />
+              {isOwnProfile ? (
+                <button
+                  type="button"
+                  onClick={handleAvatarClick}
+                  className="relative w-24 h-24 rounded-full overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  aria-label="Upload profile picture"
+                >
+                  {uploadImageMutation.isPending ? (
+                    <div className="w-24 h-24 rounded-full bg-bg-muted flex items-center justify-center">
+                      <Spinner size="sm" />
+                    </div>
+                  ) : avatarSrc ? (
+                    <img src={avatarSrc} alt={displayUser?.username ?? ''} className="w-24 h-24 object-cover" />
+                  ) : (
+                    <div className="w-24 h-24 rounded-full bg-primary flex items-center justify-center">
+                      <span className="text-2xl font-bold text-primary-foreground">
+                        {getInitials(displayUser?.username ?? '?')}
+                      </span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+                    <Camera size={20} className="text-white" aria-hidden />
                   </div>
-                ) : avatarSrc ? (
-                  <img src={avatarSrc} alt={user.username} className="w-24 h-24 object-cover" />
-                ) : (
-                  <div className="w-24 h-24 rounded-full bg-primary flex items-center justify-center">
-                    <span className="text-2xl font-bold text-primary-foreground">
-                      {getInitials(user.username)}
-                    </span>
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
-                  <Camera size={20} className="text-white" aria-hidden />
+                </button>
+              ) : (
+                <div className="w-24 h-24 rounded-full overflow-hidden">
+                  {avatarSrc ? (
+                    <img src={avatarSrc} alt={displayUser?.username ?? ''} className="w-24 h-24 object-cover" />
+                  ) : (
+                    <div className="w-24 h-24 rounded-full bg-primary flex items-center justify-center">
+                      <span className="text-2xl font-bold text-primary-foreground">
+                        {getInitials(displayUser?.username ?? '?')}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileChange}
-              />
+              )}
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
             </div>
 
             <div className="flex-1 flex flex-col gap-3 items-center sm:items-start">
               <div className="flex items-center gap-2">
-                {editingUsername ? (
+                {isOwnProfile && editingUsername ? (
                   <div className="flex items-center gap-2">
                     <Input
                       value={usernameValue}
@@ -242,45 +271,40 @@ export function ProfilePage(): JSX.Element {
                         if (e.key === 'Escape') handleCancelEdit();
                       }}
                     />
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={handleSaveUsername}
-                      isLoading={updateUsernameMutation.isPending}
-                      aria-label="Save username"
-                    >
+                    <Button size="icon" variant="ghost" onClick={handleSaveUsername} isLoading={updateUsernameMutation.isPending} aria-label="Save username">
                       <Check size={16} className="text-primary" />
                     </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={handleCancelEdit}
-                      aria-label="Cancel edit"
-                    >
+                    <Button size="icon" variant="ghost" onClick={handleCancelEdit} aria-label="Cancel edit">
                       <X size={16} className="text-destructive" />
                     </Button>
                   </div>
                 ) : (
                   <>
-                    <h1 className="text-2xl font-bold text-text-base">{user.username}</h1>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={handleEditUsername}
-                      aria-label="Edit username"
-                    >
-                      <Pencil size={15} className="text-text-muted" />
-                    </Button>
+                    <h1 className="text-2xl font-bold text-text-base">{displayUser?.username}</h1>
+                    {isOwnProfile && (
+                      <Button size="icon" variant="ghost" onClick={handleEditUsername} aria-label="Edit username">
+                        <Pencil size={15} className="text-text-muted" />
+                      </Button>
+                    )}
                   </>
                 )}
               </div>
 
-              <p className="text-sm text-text-muted">{user.email}</p>
-              <p className="text-xs text-text-muted">Member since {formatDate(user.createdAt)}</p>
+              <p className="text-sm text-text-muted">{displayUser?.email}</p>
+              {displayUser?.createdAt && (
+                <p className="text-xs text-text-muted">Member since {formatDate(displayUser.createdAt)}</p>
+              )}
+
+              {!isOwnProfile && (
+                <Button size="sm" variant="outline" onClick={handleOpenChat} className="gap-1.5 mt-1">
+                  <MessageCircle size={15} />
+                  Message
+                </Button>
+              )}
 
               {updateUsernameMutation.isError && <ErrorAlert message="Failed to update username" />}
               {uploadImageMutation.isError && <ErrorAlert message="Failed to upload image" />}
-            </div >
+            </div>
           </div >
 
           <div className="mt-6 pt-5 border-t border-border-muted flex gap-8">
@@ -339,13 +363,8 @@ export function ProfilePage(): JSX.Element {
             </button>
           </div>
 
-          {activeTab === 'posts' && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setShowCreatePost(true)}
-              className="mb-1 gap-1.5"
-            >
+          {isOwnProfile && activeTab === 'posts' && (
+            <Button size="sm" variant="outline" onClick={() => setShowCreatePost(true)} className="mb-1 gap-1.5">
               <Plus size={15} />
               New Post
             </Button>
@@ -397,7 +416,7 @@ export function ProfilePage(): JSX.Element {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {plants.map((plant) => (
-                  <PlantCard key={plant.id} plant={plant} />
+                  <PlantCard key={plant.id} plant={plant} onClick={() => setSelectedPlant(plant)} />
                 ))}
               </div>
             )}
@@ -420,16 +439,22 @@ export function ProfilePage(): JSX.Element {
         )
       }
 
-      {
-        showCreatePost && (
-          <PostModal
-            mode="create"
-            currentUserId={user.id}
-            onClose={() => setShowCreatePost(false)}
-            onSuccess={handlePostMutationSuccess}
-          />
-        )
-      }
-    </div >
+      {showCreatePost && (
+        <PostModal
+          mode="create"
+          currentUserId={user.id}
+          onClose={() => setShowCreatePost(false)}
+          onSuccess={handlePostMutationSuccess}
+        />
+      )}
+
+      {selectedPlant && (
+        <PlantDetailPanel
+          plant={selectedPlant}
+          currentUserId={user.id}
+          onClose={() => setSelectedPlant(null)}
+        />
+      )}
+    </div>
   );
 }

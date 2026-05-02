@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, Fragment } from 'react';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Send, Search, Users, ArrowLeft, Plus, ImagePlus, Pencil, Check, X,
@@ -620,6 +621,8 @@ function GroupInfoPanel({ chat, currentUserId, onClose, onChatUpdate, onChatLeft
 export function CommunityPage(): JSX.Element {
   const { user, tokens } = useAuthStore();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const currentUserId = user?.id ?? '';
 
   const [selectedChat, setSelectedChat] = useState<IChat | null>(null);
@@ -645,6 +648,16 @@ export function CommunityPage(): JSX.Element {
     queryKey: ['chats'],
     queryFn: fetchChats,
   });
+
+  const paramChatId = searchParams.get('chatId');
+  useEffect(() => {
+    if (!paramChatId || chats.length === 0) return;
+    const target = chats.find((c) => c._id === paramChatId);
+    if (target) {
+      setSelectedChat(target);
+      setShowMobileChat(true);
+    }
+  }, [paramChatId, chats]);
 
   const onSocketMessage = useCallback((raw: SocketMessage) => {
     setSelectedChat((current) => {
@@ -828,6 +841,15 @@ export function CommunityPage(): JSX.Element {
       setShowMobileChat(true);
     },
   });
+
+  const location = useLocation();
+  const openWithUserId = (location.state as { openWithUserId?: string } | null)?.openWithUserId;
+  const openHandledRef = useRef(false);
+  useEffect(() => {
+    if (!openWithUserId || openHandledRef.current) return;
+    openHandledRef.current = true;
+    createDirectChatMutation.mutate(openWithUserId);
+  }, [openWithUserId]);
 
   async function maybeDeleteEmptyNewChat(chatId: string) {
     if (newChatId === chatId && messages.length === 0) {
@@ -1045,10 +1067,17 @@ export function CommunityPage(): JSX.Element {
                     </div>
                   </button>
                 ) : (
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const other = selectedChat.participants.find((p) => p._id !== currentUserId);
+                      if (other) navigate(`/profile/${other._id}`);
+                    }}
+                    className="flex items-center gap-3 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
+                  >
                     <Avatar src={selectedChatAvatar} name={selectedChatName} />
                     <p className="text-sm font-semibold text-text-base truncate">{selectedChatName}</p>
-                  </div>
+                  </button>
                 )}
                 {selectedChat.type === 'group' && (
                   <button
