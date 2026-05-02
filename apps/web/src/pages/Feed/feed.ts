@@ -74,6 +74,7 @@ type RawComment = {
   postId: string;
   userId: { _id: string; username: string; profileImageUrl?: string } | string;
   content: string;
+  likesCount?: number;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -88,6 +89,7 @@ function mapComment(raw: RawComment): ICommentWithUser {
     postId: String(raw.postId),
     userId: user.id,
     content: raw.content,
+    likesCount: raw.likesCount ?? 0,
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt,
     user,
@@ -109,6 +111,11 @@ export async function deleteComment(commentId: string): Promise<void> {
 
 export async function updateComment(commentId: string, content: string): Promise<void> {
   await api.patch('/comments', { commentId, content });
+}
+
+export async function toggleCommentLike(commentId: string): Promise<{ liked: boolean }> {
+  const res = await api.post<{ liked: boolean }>(`/likes/comments/${commentId}/toggle`);
+  return res.data;
 }
 
 export async function uploadPostImage(file: File): Promise<string> {

@@ -1,4 +1,5 @@
 import { Heart, MessageCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import type { IPostWithDetails } from '@rootshare/shared-types';
 import { PostType } from '@rootshare/shared-types';
 import { cn } from '@/lib/utils';
@@ -41,6 +42,7 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, onLike, onClick }: PostCardProps): JSX.Element {
+  const navigate = useNavigate();
   const badge = POST_TYPE_BADGE[post.type];
   const avatarLetter = post.user.username.charAt(0).toUpperCase();
   const totalImages = post.images.length;
@@ -56,7 +58,11 @@ export function PostCard({ post, onLike, onClick }: PostCardProps): JSX.Element 
       onClick={() => onClick?.(post)}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); navigate(`/profile/${post.user.id}`); }}
+          className="flex items-center gap-3 min-w-0 text-left hover:opacity-80 transition-opacity"
+        >
           <div
             className="flex-shrink-0 h-9 w-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-sm select-none"
             aria-label={post.user.username}
@@ -71,7 +77,7 @@ export function PostCard({ post, onLike, onClick }: PostCardProps): JSX.Element 
               {formatRelativeTime(post.createdAt)}
             </span>
           </div>
-        </div>
+        </button>
 
         <div className="flex-shrink-0 flex flex-col items-end gap-1.5">
           <span

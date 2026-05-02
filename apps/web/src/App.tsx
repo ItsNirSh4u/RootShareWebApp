@@ -34,6 +34,10 @@ function App(): JSX.Element {
           element={isAuthenticated ? <AppLayout><ProfilePage /></AppLayout> : <Navigate to="/login" />}
         />
         <Route
+          path="/profile/:userId"
+          element={isAuthenticated ? <AppLayout><ProfilePage /></AppLayout> : <Navigate to="/login" />}
+        />
+        <Route
           path="/community"
           element={isAuthenticated ? <AppLayout><CommunityPage /></AppLayout> : <Navigate to="/login" />}
         />

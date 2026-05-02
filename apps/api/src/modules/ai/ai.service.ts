@@ -42,7 +42,12 @@ export class AiService {
   }
 
   async identifyPlant(imagePath: string): Promise<string> {
-    const buffer = readFileSync(imagePath);
+    const uploadsDir = path.resolve(process.env.UPLOAD_PATH || './uploads');
+    const resolved = path.resolve(imagePath);
+    if (!resolved.startsWith(uploadsDir)) {
+      throw new HttpException('Invalid image path', HttpStatus.BAD_REQUEST);
+    }
+    const buffer = readFileSync(resolved);
     const key = createHash('sha256').update(buffer).digest('hex');
 
     const cached = await this.cacheModel.findOne({ key });
@@ -55,7 +60,7 @@ export class AiService {
         {
           parts: [
             { text: 'Identify this plant. Provide: common name, scientific name, health assessment, and care tips.' },
-            { inlineData: { mimeType: this.getMimeType(imagePath), data: buffer.toString('base64') } },
+            { inlineData: { mimeType: this.getMimeType(resolved), data: buffer.toString('base64') } },
           ],
         },
       ],
