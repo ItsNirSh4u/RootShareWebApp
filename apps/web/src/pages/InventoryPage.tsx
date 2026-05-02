@@ -31,18 +31,21 @@ const STATUS_LABELS: Record<PlantStatus, string> = {
   [PlantStatus.ACTIVE]: 'Active',
   [PlantStatus.DEAD]: 'Dead',
   [PlantStatus.GIFTED]: 'Gifted',
+  [PlantStatus.SICK]: 'Sick',
 };
 
 const STATUS_BADGE: Record<PlantStatus, string> = {
   [PlantStatus.ACTIVE]: 'bg-emerald-500 text-white',
   [PlantStatus.DEAD]: 'bg-red-500 text-white',
   [PlantStatus.GIFTED]: 'bg-blue-500 text-white',
+  [PlantStatus.SICK]: 'bg-yellow-400 text-white',
 };
 
 const STATUS_FILTER_ACTIVE: Record<PlantStatus, string> = {
   [PlantStatus.ACTIVE]: 'bg-emerald-100 text-emerald-700 border-emerald-300',
   [PlantStatus.DEAD]: 'bg-red-100 text-red-700 border-red-300',
   [PlantStatus.GIFTED]: 'bg-blue-100 text-blue-700 border-blue-300',
+  [PlantStatus.SICK]: 'bg-yellow-100 text-yellow-700 border-yellow-300',
 };
 
 function formatDate(date: Date | string): string {
@@ -286,12 +289,16 @@ function PlantFormModal({ plant, onClose, onSuccess }: PlantFormModalProps): JSX
   });
 
   const saveMutation = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       const payload = { name: name.trim(), species: species.trim(), imageUrl };
       if (isEdit) {
         return updatePlant(plant.id, { ...payload, status });
       }
-      return createPlant(payload as IPlantCreate);
+      const created = await createPlant(payload as IPlantCreate);
+      if (status !== PlantStatus.ACTIVE) {
+        await updatePlant(created.id, { status });
+      }
+      return created;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['garden', 'plants'] });
@@ -323,11 +330,12 @@ function PlantFormModal({ plant, onClose, onSuccess }: PlantFormModalProps): JSX
     if (!imageFile) return;
     setIsIdentifying(true);
     try {
-      const result = await identifyPlantSpecies(imageFile);
+      const { species: result, status: detectedStatus } = await identifyPlantSpecies(imageFile);
       const match = speciesList?.find((s) => result.toLowerCase().includes(s.toLowerCase()));
       if (match) {
         setSpecies(match);
         setSpeciesLocked(true);
+        setStatus(detectedStatus);
       } else {
         toast.error('Could not identify species. Please select manually.');
       }
@@ -408,17 +416,29 @@ function PlantFormModal({ plant, onClose, onSuccess }: PlantFormModalProps): JSX
                 {isIdentifying ? 'Identifying…' : "Don't know the species? Use AI"}
               </button>
             </div>
-            <input
-              value={species}
-              onChange={(e) => setSpecies(e.target.value)}
-              placeholder="e.g. Monstera deliciosa"
-              list="species-list"
-              disabled={speciesLocked}
-              className={cn(
-                'w-full h-10 text-sm border border-border-default rounded-lg px-3 bg-bg-main text-text-base focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-text-muted',
-                speciesLocked && 'opacity-60 cursor-not-allowed',
+            <div className="relative">
+              <input
+                value={species}
+                onChange={(e) => setSpecies(e.target.value)}
+                placeholder="e.g. Monstera deliciosa"
+                list="species-list"
+                disabled={speciesLocked}
+                className={cn(
+                  'w-full h-10 text-sm border border-border-default rounded-lg px-3 bg-bg-main text-text-base focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-text-muted',
+                  speciesLocked && 'opacity-60 cursor-not-allowed pr-8',
+                )}
+              />
+              {speciesLocked && (
+                <button
+                  type="button"
+                  onClick={() => setSpeciesLocked(false)}
+                  aria-label="Unlock species"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-base transition-colors"
+                >
+                  <X size={14} />
+                </button>
               )}
-            />
+            </div>
             {speciesList && (
               <datalist id="species-list">
                 {speciesList.map((s) => <option key={s} value={s} />)}
@@ -426,20 +446,39 @@ function PlantFormModal({ plant, onClose, onSuccess }: PlantFormModalProps): JSX
             )}
           </div>
 
-          {isEdit && (
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-text-muted">Status</label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as PlantStatus)}
-                className="w-full h-10 text-sm border border-border-default rounded-lg px-3 bg-bg-main text-text-base focus:outline-none focus:ring-1 focus:ring-primary"
-              >
-                {Object.values(PlantStatus).map((s) => (
-                  <option key={s} value={s}>{STATUS_LABELS[s]}</option>
-                ))}
-              </select>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-text-muted">Status</label>
+            <div className="relative">
+              <input
+                value={STATUS_LABELS[status]}
+                onChange={(e) => {
+                  const matched = (Object.entries(STATUS_LABELS) as [PlantStatus, string][]).find(([, v]) => v === e.target.value);
+                  if (matched) setStatus(matched[0]);
+                }}
+                list="status-list"
+                disabled={speciesLocked}
+                className={cn(
+                  'w-full h-10 text-sm border border-border-default rounded-lg px-3 bg-bg-main text-text-base focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-text-muted',
+                  speciesLocked && 'opacity-60 cursor-not-allowed pr-8',
+                )}
+              />
+              {speciesLocked && (
+                <button
+                  type="button"
+                  onClick={() => setSpeciesLocked(false)}
+                  aria-label="Unlock status"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-base transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
-          )}
+            <datalist id="status-list">
+              {(isEdit ? Object.values(PlantStatus) : [PlantStatus.ACTIVE, PlantStatus.SICK, PlantStatus.DEAD]).map((s) => (
+                <option key={s} value={STATUS_LABELS[s]} />
+              ))}
+            </datalist>
+          </div>
 
           {saveMutation.isError && <ErrorAlert message="Failed to save plant. Check that the species is in the approved list." />}
 
@@ -523,6 +562,7 @@ export function InventoryPage(): JSX.Element {
     active: plants?.filter((p) => p.status === PlantStatus.ACTIVE).length ?? 0,
     dead: plants?.filter((p) => p.status === PlantStatus.DEAD).length ?? 0,
     gifted: plants?.filter((p) => p.status === PlantStatus.GIFTED).length ?? 0,
+    sick: plants?.filter((p) => p.status === PlantStatus.SICK).length ?? 0,
   };
 
   function handleEdit(plant: IPlantWithStats) {
@@ -564,6 +604,7 @@ export function InventoryPage(): JSX.Element {
         <div className="flex gap-3 mt-4 flex-wrap">
           {[
             { label: `${counts.active} Active`, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+            { label: `${counts.sick} Sick`, color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-200' },
             { label: `${counts.dead} Dead`, color: 'text-red-500', bg: 'bg-red-50', border: 'border-red-200' },
             { label: `${counts.gifted} Gifted`, color: 'text-blue-500', bg: 'bg-blue-50', border: 'border-blue-200' },
           ].map(({ label, color, bg, border }) => (
@@ -576,7 +617,7 @@ export function InventoryPage(): JSX.Element {
 
       <div className="sticky top-0 z-10 bg-bg-subtle border-b border-border-muted px-4 lg:px-8 py-2.5 flex items-center gap-3 flex-wrap">
         <div className="flex gap-1.5 flex-wrap">
-          {(['all', PlantStatus.ACTIVE, PlantStatus.DEAD, PlantStatus.GIFTED] as StatusFilter[]).map((f) => (
+          {(['all', PlantStatus.ACTIVE, PlantStatus.SICK, PlantStatus.DEAD, PlantStatus.GIFTED] as StatusFilter[]).map((f) => (
             <button
               key={f}
               type="button"

@@ -53,6 +53,7 @@ function PlantStatusBadge({ status }: PlantStatusBadgeProps): JSX.Element {
     [PlantStatus.ACTIVE]: 'bg-green-100 text-green-700',
     [PlantStatus.DEAD]: 'bg-red-100 text-red-700',
     [PlantStatus.GIFTED]: 'bg-blue-100 text-blue-700',
+    [PlantStatus.SICK]: 'bg-yellow-100 text-yellow-700',
   };
   return (
     <span className={cn('text-xs font-medium px-2 py-0.5 rounded-full capitalize', styles[status])}>
