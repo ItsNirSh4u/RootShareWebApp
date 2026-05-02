@@ -46,7 +46,6 @@ export class PostsService {
       .exec();
 
     return posts.map((post) => {
-      console.log("test", { post })
       const json = post.toJSON() as Record<string, unknown>;
       const likes = json['likes'] as unknown[];
       return { ...json, isLiked: Array.isArray(likes) && likes.length > 0, likes: undefined };
