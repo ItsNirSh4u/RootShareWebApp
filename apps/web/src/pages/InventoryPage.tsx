@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Sprout, Plus, Pencil, Trash2, X, Search, FileImage,
-  MessageCircle, Leaf, ArrowLeft, ExternalLink,
+  MessageCircle, Leaf, ArrowLeft, ExternalLink, ChevronDown,
 } from 'lucide-react';
 import type { IPlantWithStats, IPostWithDetails, IPlantCreate } from '@rootshare/shared-types';
 import { PlantStatus } from '@rootshare/shared-types';
@@ -288,7 +288,6 @@ function PlantFormModal({ plant, onClose, onSuccess }: PlantFormModalProps): JSX
   const [imageUploading, setImageUploading] = useState(false);
   const [isIdentifying, setIsIdentifying] = useState(false);
   const [speciesLocked, setSpeciesLocked] = useState(false);
-  const [statusFocused, setStatusFocused] = useState(false);
 
   const { data: speciesList } = useQuery({
     queryKey: ['species'],
@@ -456,37 +455,24 @@ function PlantFormModal({ plant, onClose, onSuccess }: PlantFormModalProps): JSX
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-medium text-text-muted">Status</label>
             <div className="relative">
-              <input
-                value={statusFocused ? '' : STATUS_LABELS[status]}
-                onFocus={() => setStatusFocused(true)}
-                onBlur={() => setStatusFocused(false)}
-                onChange={(e) => {
-                  const matched = (Object.entries(STATUS_LABELS) as [PlantStatus, string][]).find(([, v]) => v === e.target.value);
-                  if (matched) setStatus(matched[0]);
-                }}
-                list="status-list"
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as PlantStatus)}
                 disabled={speciesLocked}
                 className={cn(
-                  'w-full h-10 text-sm border border-border-default rounded-lg px-3 bg-bg-main text-text-base focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-text-muted',
-                  speciesLocked && 'opacity-60 cursor-not-allowed pr-8',
+                  'w-full h-10 text-sm border border-border-default rounded-lg px-3 pr-8 bg-bg-main text-text-base focus:outline-none focus:ring-1 focus:ring-primary appearance-none',
+                  speciesLocked && 'opacity-60 cursor-not-allowed',
                 )}
-              />
-              {speciesLocked && (
-                <button
-                  type="button"
-                  onClick={() => setSpeciesLocked(false)}
-                  aria-label="Unlock status"
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-base transition-colors"
-                >
-                  <X size={14} />
-                </button>
-              )}
+              >
+                {(isEdit ? Object.values(PlantStatus) : [PlantStatus.ACTIVE, PlantStatus.SICK, PlantStatus.DEAD]).map((s) => (
+                  <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+                ))}
+              </select>
+              {speciesLocked
+                ? <button type="button" onClick={() => setSpeciesLocked(false)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-base" aria-label="Unlock status"><X size={14} /></button>
+                : <ChevronDown size={14} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
+              }
             </div>
-            <datalist id="status-list">
-              {(isEdit ? Object.values(PlantStatus) : [PlantStatus.ACTIVE, PlantStatus.SICK, PlantStatus.DEAD]).map((s) => (
-                <option key={s} value={STATUS_LABELS[s]} />
-              ))}
-            </datalist>
           </div>
 
           {saveMutation.isError && <ErrorAlert message="Failed to save plant. Check that the species is in the approved list." />}
