@@ -61,6 +61,10 @@ describe('PlantsService', () => {
           useValue: mockPlantModel,
         },
         {
+          provide: getModelToken('Post'),
+          useValue: {},
+        },
+        {
           provide: SpeciesService,
           useValue: mockSpeciesService,
         },
