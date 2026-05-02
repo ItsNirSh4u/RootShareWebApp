@@ -1,5 +1,6 @@
 export enum PlantStatus {
   ACTIVE = 'active',
+  SICK = 'sick',
   DEAD = 'dead',
   GIFTED = 'gifted',
 }

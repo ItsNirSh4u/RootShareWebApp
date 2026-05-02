@@ -1,5 +1,6 @@
 import api from '@/lib/api';
 import type { IPlant, IPlantCreate, IPlantUpdate, IPlantWithStats, IPostWithDetails } from '@rootshare/shared-types';
+import { PlantStatus } from '@rootshare/shared-types';
 import { mapPost, type RawPost } from '@/pages/Feed/feed';
 
 type RawPlant = Omit<IPlant, 'id'> & { _id: string };
@@ -43,11 +44,18 @@ export async function fetchSpeciesList(): Promise<string[]> {
   return res.data.map((s) => s.name);
 }
 
-export async function identifyPlantSpecies(file: File): Promise<string> {
+export async function identifyPlantSpecies(file: File): Promise<{ species: string; status: PlantStatus }> {
   const formData = new FormData();
   formData.append('image', file);
   const res = await api.post<{ result: string }>('/ai/identify', formData, {
     headers: { 'Content-Type': undefined },
   });
-  return res.data.result;
+  const text = res.data.result;
+  const statusMatch = text.match(/STATUS:\s*(healthy|sick|dead)/i);
+  const raw = statusMatch?.[1]?.toLowerCase();
+  const status =
+    raw === 'sick' ? PlantStatus.SICK :
+    raw === 'dead' ? PlantStatus.DEAD :
+    PlantStatus.ACTIVE;
+  return { species: text, status };
 }

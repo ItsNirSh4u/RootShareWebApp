@@ -122,6 +122,11 @@ export function FeaturedPlantsCarousel({ plants, isLoading }: FeaturedPlantsCaro
                     Active
                   </span>
                 )}
+                {plant.status === PlantStatus.SICK && (
+                  <span className="inline-block mt-2 text-xs font-medium bg-yellow-100 text-yellow-700 border border-yellow-300 px-2 py-0.5 rounded-full">
+                    Sick
+                  </span>
+                )}
               </div>
             </div>
           ))}
