@@ -288,6 +288,7 @@ function PlantFormModal({ plant, onClose, onSuccess }: PlantFormModalProps): JSX
   const [imageUploading, setImageUploading] = useState(false);
   const [isIdentifying, setIsIdentifying] = useState(false);
   const [speciesLocked, setSpeciesLocked] = useState(false);
+  const [statusFocused, setStatusFocused] = useState(false);
 
   const { data: speciesList } = useQuery({
     queryKey: ['species'],
@@ -456,7 +457,9 @@ function PlantFormModal({ plant, onClose, onSuccess }: PlantFormModalProps): JSX
             <label className="text-xs font-medium text-text-muted">Status</label>
             <div className="relative">
               <input
-                value={STATUS_LABELS[status]}
+                value={statusFocused ? '' : STATUS_LABELS[status]}
+                onFocus={() => setStatusFocused(true)}
+                onBlur={() => setStatusFocused(false)}
                 onChange={(e) => {
                   const matched = (Object.entries(STATUS_LABELS) as [PlantStatus, string][]).find(([, v]) => v === e.target.value);
                   if (matched) setStatus(matched[0]);
