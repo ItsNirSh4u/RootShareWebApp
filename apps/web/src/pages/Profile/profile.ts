@@ -1,5 +1,5 @@
 import api from '@/lib/api';
-import type { IPostWithDetails, IPlant, IPlantWithStats, IUser, IUserUpdate } from '@rootshare/shared-types';
+import type { IPostWithDetails, IPlantWithStats, IUser, IUserUpdate } from '@rootshare/shared-types';
 import { mapPost, type RawPost } from '@/pages/Feed/feed';
 
 export async function fetchUserPosts(userId: string): Promise<IPostWithDetails[]> {
@@ -7,7 +7,6 @@ export async function fetchUserPosts(userId: string): Promise<IPostWithDetails[]
   return response.data.map(mapPost).filter((post) => post.user.id === userId);
 }
 
-type RawPlant = Omit<IPlant, 'id'> & { _id: string };
 type RawPlantWithStats = Omit<IPlantWithStats, 'id'> & { _id: string };
 
 export async function fetchUserPlants(): Promise<IPlantWithStats[]> {

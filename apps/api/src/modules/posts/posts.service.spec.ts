@@ -14,6 +14,7 @@ describe('PostsService', () => {
 
   const mockUserId = new Types.ObjectId().toString();
   const mockPostId = new Types.ObjectId();
+  const mockDate = new Date('2024-01-01');
 
   const mockPost = {
     _id: mockPostId,
@@ -23,10 +24,23 @@ describe('PostsService', () => {
     images: [],
     likesCount: 0,
     commentsCount: 0,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    likes: [],
+    createdAt: mockDate,
+    updatedAt: mockDate,
     save: jest.fn(),
     deleteOne: jest.fn(),
+    toJSON: jest.fn().mockReturnValue({
+      _id: mockPostId,
+      userId: new Types.ObjectId(mockUserId),
+      type: PostType.UPDATE,
+      content: 'Test post content',
+      images: [],
+      likesCount: 0,
+      commentsCount: 0,
+      likes: [],
+      createdAt: mockDate,
+      updatedAt: mockDate,
+    }),
   };
 
   beforeEach(async () => {
@@ -95,7 +109,10 @@ describe('PostsService', () => {
 
       expect(mockPlantsService.findOne).toHaveBeenCalledWith(plantId);
       expect(mockPostModel).toHaveBeenCalledWith({
-        ...createWithPlant,
+        type: createWithPlant.type,
+        content: createWithPlant.content,
+        images: createWithPlant.images,
+        plantId: expect.any(Types.ObjectId),
         userId: expect.any(Types.ObjectId),
       });
     });
@@ -117,17 +134,17 @@ describe('PostsService', () => {
 
   describe('findAll', () => {
     it('should return all posts sorted by createdAt desc', async () => {
-      const mockPosts = [mockPost, { ...mockPost, _id: new Types.ObjectId() }];
       mockPostModel.find.mockReturnValue({
         sort: jest.fn().mockReturnThis(),
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockPosts),
+        exec: jest.fn().mockResolvedValue([mockPost]),
       });
 
       const result = await service.findAll(mockUserId);
 
       expect(mockPostModel.find).toHaveBeenCalled();
-      expect(result).toEqual(mockPosts);
+      expect(result[0]).toMatchObject({ content: mockPost.content, isLiked: false });
+      expect((result[0] as any).likes).toBeUndefined();
     });
   });
 

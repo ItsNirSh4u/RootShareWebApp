@@ -26,6 +26,8 @@ describe('AiService', () => {
   let mockModels: { generateContent: jest.Mock; generateContentStream: jest.Mock };
 
   beforeEach(async () => {
+    process.env.UPLOAD_PATH = '/uploads';
+
     mockCacheModel = {
       findOne: jest.fn(),
       create: jest.fn(),
