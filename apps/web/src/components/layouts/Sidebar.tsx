@@ -107,7 +107,10 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps): JSX.Element {
             </button>
 
             {showSearch && (
-              <div className="absolute left-full top-0 ml-2 w-72 bg-bg-card border border-border-default rounded-xl shadow-soft-lg z-50 overflow-hidden">
+              <div className={cn(
+                'absolute w-72 bg-bg-card border border-border-default rounded-xl shadow-soft-lg z-50 overflow-hidden',
+                isOpen ? 'top-full left-0 mt-1' : 'left-full top-0 ml-2',
+              )}>
                 <div className="p-3 border-b border-border-muted">
                   <input
                     autoFocus
